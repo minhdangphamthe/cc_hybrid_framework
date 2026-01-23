@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, ScrollView, UITransform } from 'cc';
+import { _decorator, Component, Node, ScrollView, UITransform, Vec2 } from 'cc';
 
 const { ccclass, property } = _decorator;
 
@@ -32,7 +32,7 @@ export class PagerView extends Component {
     this._updateIndicator();
 
     const pageWidth = this._getPageWidth();
-    sv.scrollToOffset({ x: this._index * pageWidth, y: 0 }, 0.2);
+    sv.scrollToOffset(new Vec2(this._index * pageWidth, 0), 0.2);
   }
 
   private _onScrollEnded(): void {

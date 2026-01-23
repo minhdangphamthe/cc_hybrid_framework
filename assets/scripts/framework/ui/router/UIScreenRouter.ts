@@ -1,8 +1,8 @@
 import { Node } from 'cc';
+import { IUIHost } from '../IUIHost';
 import { UIPopup } from '../UIPopup';
 import { UIScreen } from '../UIScreen';
 import { UIView } from '../UIView';
-import { UIRoot } from '../UIRoot';
 
 type StackItem<T extends UIView> = { path: string; view: T };
 
@@ -18,7 +18,7 @@ export class UIScreenRouter {
   private _popups: StackItem<UIPopup>[] = [];
   private _busy = false;
 
-  constructor(private _root: UIRoot) {}
+  constructor(private _root: IUIHost) {}
 
   async pushScreen(path: string, params?: any): Promise<UIScreen> {
     if (this._busy) throw new Error('[UIScreenRouter] Busy');
@@ -27,7 +27,7 @@ export class UIScreenRouter {
     try {
       const prefab = await this._root._loadPrefab(path);
       const layer = this._requireLayer(this._root.screensLayer, 'screensLayer');
-      const next = this._root._instantiate<UIScreen>(prefab, layer, params);
+      const next = this._root._createView<UIScreen>(prefab, layer, params);
 
       const cur = this._topScreen();
       if (cur) await cur.hide();
@@ -66,7 +66,7 @@ export class UIScreenRouter {
     try {
       const prefab = await this._root._loadPrefab(path);
       const layer = this._requireLayer(this._root.screensLayer, 'screensLayer');
-      const next = this._root._instantiate<UIScreen>(prefab, layer, params);
+      const next = this._root._createView<UIScreen>(prefab, layer, params);
 
       const top = this._screens.pop();
       if (top) {
@@ -89,7 +89,7 @@ export class UIScreenRouter {
     try {
       const prefab = await this._root._loadPrefab(path);
       const layer = this._requireLayer(this._root.popupsLayer, 'popupsLayer');
-      const pop = this._root._instantiate<UIPopup>(prefab, layer, params);
+      const pop = this._root._createView<UIPopup>(prefab, layer, params);
 
       this._popups.push({ path, view: pop });
       await pop.show();

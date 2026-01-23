@@ -3,6 +3,7 @@ import { ServiceLocator } from '../core/ServiceLocator';
 import { Services } from '../services/ServiceTokens';
 import { IAssetsService } from '../services/interfaces/IAssetsService';
 import { IUIService } from '../services/interfaces/IUIService';
+import { IUIHost } from './IUIHost';
 import { UIPopup } from './UIPopup';
 import { UIScreen } from './UIScreen';
 import { UIView } from './UIView';
@@ -12,7 +13,7 @@ import { ToastManager } from './components/ToastManager';
 const { ccclass, property } = _decorator;
 
 @ccclass('UIRoot')
-export class UIRoot extends Component implements IUIService {
+export class UIRoot extends Component implements IUIService, IUIHost {
   @property(Node)
   screensLayer: Node | null = null;
 
@@ -81,7 +82,7 @@ export class UIRoot extends Component implements IUIService {
   }
 
   /** Internal: instantiates a prefab under parent and returns its UIView component. */
-  _instantiate<T extends UIView>(prefab: Prefab, parent: Node, params?: any): T {
+  _createView<T extends UIView>(prefab: Prefab, parent: Node, params?: any): T {
     const node = instantiate(prefab);
     node.setParent(parent);
 

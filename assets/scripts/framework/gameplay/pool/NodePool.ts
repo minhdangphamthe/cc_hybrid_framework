@@ -52,7 +52,7 @@ export class NodePool {
   }
 
   private callPoolable(node: Node, method: 'onSpawn' | 'onDespawn', data?: any): void {
-    const comps = node.getComponentsInChildren(Component, true);
+    const comps = node.getComponentsInChildren(Component);
     for (const c of comps) {
       const p = c as unknown as IPoolable;
       const fn = (p as any)[method];

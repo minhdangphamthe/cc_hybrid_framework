@@ -23,16 +23,21 @@ export class UITransition {
   private static _fade(node: Node, from: number, to: number, d: number): Promise<void> {
     const op = this._ensureOpacity(node);
     op.opacity = from;
-    return new Promise<void>((res) => tween(op).to(d, { opacity: to }).call(res).start());
+    return new Promise<void>((res) => tween(op).to(d, { opacity: to }).call(() => res()).start());
   }
 
   private static _scaleFade(node: Node, sFrom: number, sTo: number, oFrom: number, oTo: number, d: number): Promise<void> {
     const op = this._ensureOpacity(node);
     op.opacity = oFrom;
     node.setScale(new Vec3(sFrom, sFrom, 1));
-    return new Promise<void>((res) => {
-      tween(node).to(d, { scale: new Vec3(sTo, sTo, 1) }).start();
-      tween(op).to(d, { opacity: oTo }).call(res).start();
+
+    const scalePromise = new Promise<void>((res) => {
+      tween(node).to(d, { scale: new Vec3(sTo, sTo, 1) }).call(() => res()).start();
     });
+    const opacityPromise = new Promise<void>((res) => {
+      tween(op).to(d, { opacity: oTo }).call(() => res()).start();
+    });
+
+    return Promise.all([scalePromise, opacityPromise]).then(() => {});
   }
 }

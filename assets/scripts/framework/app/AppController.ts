@@ -1,6 +1,7 @@
 import { _decorator, Component } from 'cc';
 import { FSM, IState } from '../core/FSM';
 import { EventBus } from '../core/EventBus';
+import { IDisposable, Lifetime } from '../core/Lifetime';
 import { ServiceLocator } from '../core/ServiceLocator';
 import { Services } from '../services/ServiceTokens';
 import { ISceneService } from '../services/interfaces/ISceneService';
@@ -15,6 +16,8 @@ type AppStateName = 'Boot' | 'Home' | 'Gameplay' | 'Result';
 @ccclass('AppController')
 export class AppController extends Component {
   private _fsm = new FSM();
+  private _life = new Lifetime();
+  private _pendingWait: IDisposable | null = null;
   private _bus!: EventBus<AppEvents>;
   private _scene!: ISceneService;
   private _analytics: IAnalyticsService | null = null;
@@ -121,15 +124,19 @@ export class AppController extends Component {
   }
 
   onDestroy(): void {
+    this._pendingWait?.dispose();
+    this._life.dispose();
     this._fsm.dispose();
   }
 
   private waitEvent<K extends keyof AppEvents>(event: K): Promise<AppEvents[K]> {
     return new Promise((resolve) => {
       const off = this._bus.on(event, (payload) => {
+        this._pendingWait = null;
         off.dispose();
         resolve(payload);
       });
+      this._pendingWait = off;
     });
   }
 

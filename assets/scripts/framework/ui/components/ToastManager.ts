@@ -1,5 +1,5 @@
 import { Node, Prefab } from 'cc';
-import { UIRoot } from '../UIRoot';
+import { IUIHost } from '../IUIHost';
 import { ToastView } from './ToastView';
 
 const TOAST_PREFAB_PATH = 'ui/components/ToastView';
@@ -15,7 +15,7 @@ export class ToastManager {
   private _showing = false;
   private _prefab: Prefab | null = null;
 
-  constructor(private _root: UIRoot) {}
+  constructor(private _root: IUIHost) {}
 
   dispose(): void {
     this._queue.length = 0;
@@ -49,7 +49,7 @@ export class ToastManager {
       this._prefab = await this._root._loadPrefab(TOAST_PREFAB_PATH);
     }
 
-    const view = this._root._instantiate<ToastView>(this._prefab, layer, { text, duration });
+    const view = this._root._createView<ToastView>(this._prefab, layer, { text, duration });
     view.node.active = true;
     return view;
   }
