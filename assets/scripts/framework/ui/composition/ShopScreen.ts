@@ -2,6 +2,7 @@ import { _decorator, Label } from 'cc';
 import { ServiceLocator } from '../../core/ServiceLocator';
 import { Services } from '../../services/ServiceTokens';
 import { IAnalyticsService } from '../../services/interfaces/IAnalyticsService';
+import { AnalyticsEvent } from '../../analytics/AnalyticsEvents';
 import { RecycleListView, IListAdapter } from '../components/RecycleListView';
 import { Binder } from '../mvvm/Binder';
 import { UIScreen } from '../UIScreen';
@@ -54,6 +55,6 @@ export class ShopScreen extends UIScreen {
 
   private _buy(id: string): void {
     const analytics = ServiceLocator.tryResolve<IAnalyticsService>(Services.Analytics);
-    analytics?.logEvent('shop_buy_click', { id });
+    analytics?.logEvent(AnalyticsEvent.ShopBuyClick, { id });
   }
 }

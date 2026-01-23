@@ -1,4 +1,4 @@
-import { _decorator, Component, director, Node } from 'cc';
+import { _decorator, Component, director, Enum, Node } from 'cc';
 import { EventBus } from './core/EventBus';
 import { ServiceLocator } from './core/ServiceLocator';
 import { Services } from './services/ServiceTokens';
@@ -14,10 +14,11 @@ import { NoopAdsService } from './services/impl/NoopAdsService';
 import { NoopAnalyticsService } from './services/impl/NoopAnalyticsService';
 import { NoopAudioService } from './services/impl/NoopAudioService';
 import { NoopPushNotificationService } from './services/impl/NoopPushNotificationService';
+import {  SceneMode } from './app/AppConstants';
 
 const { ccclass, property } = _decorator;
 
-type SceneMode = 'single' | 'multi';
+const DEFAULT_SAVE_PREFIX = 'game_';
 
 /**
  * Attach this component to a node in your first scene.
@@ -34,9 +35,10 @@ export class FrameworkBootstrap extends Component {
   autoAddAppController = true;
 
   @property({
-    tooltip: 'App mode: \'single\' uses one scene; \'multi\' loads scenes via ISceneService.',
+    type: Enum(SceneMode),
+    tooltip: 'App mode: Single uses one scene; Multi loads scenes via ISceneService.',
   })
-  sceneMode: SceneMode = 'single';
+  sceneMode: SceneMode = SceneMode.Single;
 
   @property({ tooltip: 'Home scene name (multi-scene mode).' })
   homeScene = 'Home';
@@ -61,11 +63,11 @@ export class FrameworkBootstrap extends Component {
     this._registerServices();
 
     if (this.autoAddAppController) {
-      const app = this.getComponent(AppController) ?? this.addComponent(AppController);
+      const app = this.getComponent(AppController) ?? this.addComponent(AppController);      
       app.configure({
         mode: this.sceneMode,
         scenes:
-          this.sceneMode === 'multi'
+          this.sceneMode === SceneMode.Multi
             ? {
                 home: this.homeScene,
                 gameplay: this.gameplayScene,
@@ -104,7 +106,7 @@ export class FrameworkBootstrap extends Component {
     const assets = new CocosAssetsService();
     const audio = new NoopAudioService();
     const input = new CocosInputService();
-    const save = new CocosSaveService('game_');
+    const save = new CocosSaveService(DEFAULT_SAVE_PREFIX);
     const network = new FetchNetworkService();
     const ads = new NoopAdsService();
     const analytics = new NoopAnalyticsService();

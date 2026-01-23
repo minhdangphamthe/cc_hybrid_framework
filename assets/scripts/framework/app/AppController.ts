@@ -8,10 +8,10 @@ import { ISceneService } from '../services/interfaces/ISceneService';
 import { IAnalyticsService } from '../services/interfaces/IAnalyticsService';
 import { AppControllerOptions } from './AppTypes';
 import { AppEvents } from './AppEvents';
+import { AppEvent, SceneMode, AppState } from './AppConstants';
+import { AnalyticsEvent } from '../analytics/AnalyticsEvents';
 
 const { ccclass } = _decorator;
-
-type AppStateName = 'Boot' | 'Home' | 'Gameplay' | 'Result';
 
 @ccclass('AppController')
 export class AppController extends Component {
@@ -23,7 +23,7 @@ export class AppController extends Component {
   private _analytics: IAnalyticsService | null = null;
 
   private _opts: AppControllerOptions = {
-    mode: 'single',
+    mode: SceneMode.Single,
     autoPlayFromHome: false,
     autoPlayDelaySec: 0.2,
   };
@@ -41,30 +41,30 @@ export class AppController extends Component {
     const boot: IState = {
       name: 'Boot',
       onEnter: async () => {
-        this._analytics?.logEvent('app_boot_enter');
+        this._analytics?.logEvent(AnalyticsEvent.AppBootEnter);
         // Go next immediately; preload can be done by services/feature layer.
-        this._fsm.transition('Home');
+        this._fsm.transition(AppState.Home);
       },
     };
 
     const home: IState = {
       name: 'Home',
       onEnter: async () => {
-        this._analytics?.logEvent('app_home_enter');
-        this._bus.emit('app/stateChanged', { state: 'Home' });
+        this._analytics?.logEvent(AnalyticsEvent.AppHomeEnter);
+        this._bus.emit(AppEvent.StateChanged, { state: AppState.Home });
 
-        if (this._opts.mode === 'multi' && this._opts.scenes?.home) {
+        if (this._opts.mode === SceneMode.Multi && this._opts.scenes?.home) {
           await this.safeLoadScene(this._opts.scenes.home);
         }
 
         if (this._opts.autoPlayFromHome) {
-          this.scheduleOnce(() => this._fsm.transition('Gameplay'), this._opts.autoPlayDelaySec ?? 0.2);
+          this.scheduleOnce(() => this._fsm.transition(AppState.Gameplay), this._opts.autoPlayDelaySec ?? 0.2);
           return;
         }
 
         // Wait for UI to emit app/play
-        await this.waitEvent('app/play');
-        this._fsm.transition('Gameplay');
+        await this.waitEvent(AppEvent.Play);
+        this._fsm.transition(AppState.Gameplay);
       },
       onExit: () => {
         this.unscheduleAllCallbacks();
@@ -74,20 +74,20 @@ export class AppController extends Component {
     const gameplay: IState = {
       name: 'Gameplay',
       onEnter: async () => {
-        this._analytics?.logEvent('app_gameplay_enter');
-        this._bus.emit('app/stateChanged', { state: 'Gameplay' });
+        this._analytics?.logEvent(AnalyticsEvent.AppGameplayEnter);
+        this._bus.emit(AppEvent.StateChanged, { state: AppState.Gameplay });
 
-        if (this._opts.mode === 'multi' && this._opts.scenes?.gameplay) {
+        if (this._opts.mode === SceneMode.Multi && this._opts.scenes?.gameplay) {
           await this.safeLoadScene(this._opts.scenes.gameplay);
         }
 
         // In production: your GameplayController should emit app/restart or app/backToHome.
-        const which = await this.waitAny(['app/restart', 'app/backToHome'] as const);
-        if (which === 'app/restart') {
+        const which = await this.waitAny([AppEvent.Restart, AppEvent.BackToHome] as const);
+        if (which === AppEvent.Restart) {
           // Most games restart gameplay directly.
-          this._fsm.transition('Gameplay');
+          this._fsm.transition(AppState.Gameplay);
         } else {
-          this._fsm.transition('Home');
+          this._fsm.transition(AppState.Home);
         }
       },
       onExit: () => {
@@ -98,16 +98,16 @@ export class AppController extends Component {
     const result: IState = {
       name: 'Result',
       onEnter: async () => {
-        this._analytics?.logEvent('app_result_enter');
-        this._bus.emit('app/stateChanged', { state: 'Result' });
+        this._analytics?.logEvent(AnalyticsEvent.AppResultEnter);
+        this._bus.emit(AppEvent.StateChanged, { state: AppState.Result });
 
-        if (this._opts.mode === 'multi' && this._opts.scenes?.result) {
+        if (this._opts.mode === SceneMode.Multi && this._opts.scenes?.result) {
           await this.safeLoadScene(this._opts.scenes.result);
         }
 
         // Wait user action
-        await this.waitEvent('app/backToHome');
-        this._fsm.transition('Home');
+        await this.waitEvent(AppEvent.BackToHome);
+        this._fsm.transition(AppState.Home);
       },
     };
 
@@ -116,7 +116,7 @@ export class AppController extends Component {
 
   start(): void {
     // Start app
-    this._fsm.transition('Boot');
+    this._fsm.transition(AppState.Boot);
   }
 
   update(dt: number): void {
@@ -159,7 +159,7 @@ export class AppController extends Component {
         preload: true,
         onProgress: (p) => {
           // Optional: broadcast progress to UI
-          this._bus.emit('app/stateChanged', { state: 'Loading', data: p });
+          this._bus.emit(AppEvent.StateChanged, { state: AppState.Loading, data: p });
         },
       });
     } catch (e: any) {

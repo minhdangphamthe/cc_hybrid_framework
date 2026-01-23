@@ -35,7 +35,10 @@ export * from './ui/mvvm/ObservableValue';
 export * from './ui/mvvm/ViewModel';
 export * from './ui/router/UIRouter';
 
+export * from './analytics/AnalyticsEvents';
+
 export * from './app/AppController';
+export * from './app/AppConstants';
 export * from './app/AppEvents';
 export * from './app/AppTypes';
 

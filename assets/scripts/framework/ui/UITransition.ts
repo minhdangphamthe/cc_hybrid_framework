@@ -1,16 +1,23 @@
 import { Node, tween, UIOpacity, Vec3 } from 'cc';
-export type TransitionKind = 'none' | 'fade' | 'scaleFade';
+
+export const TransitionKind = {
+  None: 'none',
+  Fade: 'fade',
+  ScaleFade: 'scaleFade',
+} as const;
+
+export type TransitionKind = typeof TransitionKind[keyof typeof TransitionKind];
 
 export class UITransition {
   static async playIn(node: Node, kind: TransitionKind, duration = 0.18): Promise<void> {
-    if (kind === 'none') return;
-    if (kind === 'fade') return this._fade(node, 0, 255, duration);
+    if (kind === TransitionKind.None) return;
+    if (kind === TransitionKind.Fade) return this._fade(node, 0, 255, duration);
     return this._scaleFade(node, 0.92, 1, 0, 255, duration);
   }
 
   static async playOut(node: Node, kind: TransitionKind, duration = 0.14): Promise<void> {
-    if (kind === 'none') return;
-    if (kind === 'fade') return this._fade(node, 255, 0, duration);
+    if (kind === TransitionKind.None) return;
+    if (kind === TransitionKind.Fade) return this._fade(node, 255, 0, duration);
     return this._scaleFade(node, 1, 0.92, 255, 0, duration);
   }
 

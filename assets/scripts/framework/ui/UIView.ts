@@ -7,7 +7,7 @@ const { ccclass, property } = _decorator;
 @ccclass('UIView')
 export class UIView extends Component {
   @property({ tooltip: 'Animation used when show/hide view.' })
-  transition: TransitionKind = 'scaleFade';
+  transition: TransitionKind = TransitionKind.ScaleFade;
 
   protected _life = new Lifetime();
 

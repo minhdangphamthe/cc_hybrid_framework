@@ -308,19 +308,21 @@ import { EventBus } from './core/EventBus';
 import { Services } from './services/ServiceTokens';
 import { CocosSceneService } from './services/impl/CocosSceneService';
 import { AppController } from './app/AppController';
+import { AppSceneMode, type AppSceneModeName } from './app/AppConstants';
 
 @ccclass('FrameworkBootstrap')
 export class FrameworkBootstrap extends Component {
   persistAcrossScenes = true;
   autoAddAppController = true;
-  sceneMode: 'single' | 'multi' = 'single';
+  sceneMode: AppSceneModeName = AppSceneMode.Single;
 
   onLoad(): void {
     if (this.persistAcrossScenes) {
       director.addPersistRootNode(this.node);
     }
 
-    ServiceLocator.register('EventBus', new EventBus&lt;any&gt;());
+    // Use Services tokens instead of magic strings
+    ServiceLocator.register(Services.EventBus, new EventBus&lt;any&gt;());
     ServiceLocator.register(Services.Scene, new CocosSceneService());
 
     if (this.autoAddAppController) {
@@ -336,18 +338,20 @@ export class FrameworkBootstrap extends Component {
           <pre><code class="language-ts">import { _decorator, Component } from 'cc';
 import { ServiceLocator } from '../framework/core/ServiceLocator';
 import { EventBus } from '../framework/core/EventBus';
+import { Services } from '../framework/services/ServiceTokens';
 import { AppEvents } from '../framework/app/AppEvents';
+import { AppEvent } from '../framework/app/AppConstants';
 
 @ccclass('HomeView')
 export class HomeView extends Component {
   private _bus!: EventBus&lt;AppEvents&gt;;
 
   onLoad(): void {
-    this._bus = ServiceLocator.resolve('EventBus');
+    this._bus = ServiceLocator.resolve&lt;EventBus&lt;AppEvents&gt;&gt;(Services.EventBus);
   }
 
   onClickPlay(): void {
-    this._bus.emit('app/play', {});
+    this._bus.emit(AppEvent.Play, {});
   }
 }</code></pre>
         </details>
@@ -357,22 +361,24 @@ export class HomeView extends Component {
           <pre><code class="language-ts">import { _decorator, Component } from 'cc';
 import { ServiceLocator } from '../framework/core/ServiceLocator';
 import { EventBus } from '../framework/core/EventBus';
+import { Services } from '../framework/services/ServiceTokens';
 import { AppEvents } from '../framework/app/AppEvents';
+import { AppEvent } from '../framework/app/AppConstants';
 
 @ccclass('GameplayController')
 export class GameplayController extends Component {
   private _bus!: EventBus&lt;AppEvents&gt;;
 
   onLoad(): void {
-    this._bus = ServiceLocator.resolve('EventBus');
+    this._bus = ServiceLocator.resolve&lt;EventBus&lt;AppEvents&gt;&gt;(Services.EventBus);
   }
 
   onUserDie(): void {
-    this._bus.emit('app/restart', {});
+    this._bus.emit(AppEvent.Restart, {});
   }
 
   onUserBackHome(): void {
-    this._bus.emit('app/backToHome', {});
+    this._bus.emit(AppEvent.BackToHome, {});
   }
 }</code></pre>
         </details>

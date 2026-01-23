@@ -1,4 +1,6 @@
-export type SceneMode = 'single' | 'multi';
+import { SceneMode } from './AppConstants';
+
+// export type SceneMode = AppSceneModeName;
 
 export interface AppSceneNames {
   home: string;
