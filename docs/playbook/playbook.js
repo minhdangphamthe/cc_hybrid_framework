@@ -1,0 +1,292 @@
+/* Hybrid Framework Playbook - minimal JS (no deps) */
+
+(function () {
+  const body = document.body;
+  const nav = document.getElementById('nav');
+  const q = document.getElementById('q');
+  const modePicker = document.getElementById('modePicker');
+
+  function setMode(mode) {
+    body.classList.toggle('mode-single', mode === 'single');
+    body.classList.toggle('mode-multi', mode === 'multi');
+    localStorage.setItem('hf_mode', mode);
+  }
+
+  const savedMode = localStorage.getItem('hf_mode') || 'single';
+  setMode(savedMode);
+  if (modePicker) {
+    modePicker.querySelectorAll('input[name="mode"]').forEach((r) => {
+      r.checked = r.value === savedMode;
+      r.addEventListener('change', () => setMode(r.value));
+    });
+  }
+
+  if (q && nav) {
+    q.addEventListener('input', () => {
+      const term = q.value.trim().toLowerCase();
+      nav.querySelectorAll('a').forEach((a) => {
+        const hay = (a.getAttribute('data-text') || a.textContent || '').toLowerCase();
+        a.style.display = term === '' || hay.includes(term) ? 'block' : 'none';
+      });
+    });
+  }
+
+  // ---------- TypeScript highlighter (tokenizer) ----------
+
+  const TS_KEYWORDS = new Set([
+    'import', 'from', 'export', 'default', 'class', 'interface', 'type', 'extends', 'implements',
+    'public', 'private', 'protected', 'readonly', 'static', 'async', 'await', 'return', 'new',
+    'const', 'let', 'var', 'if', 'else', 'for', 'while', 'do', 'switch', 'case', 'break', 'continue',
+    'try', 'catch', 'finally', 'throw', 'typeof', 'instanceof', 'in', 'as', 'void', 'this', 'super',
+    'true', 'false', 'null', 'undefined'
+  ]);
+
+  const TS_TYPES = new Set([
+    'string', 'number', 'boolean', 'any', 'unknown', 'never', 'void', 'object',
+    'Record', 'Partial', 'Promise', 'Array', 'Map', 'Set'
+  ]);
+
+  function escapeHtml(s) {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function isIdentStart(ch) {
+    return /[A-Za-z_$]/.test(ch);
+  }
+
+  function isIdent(ch) {
+    return /[A-Za-z0-9_$]/.test(ch);
+  }
+
+  function isDigit(ch) {
+    return /[0-9]/.test(ch);
+  }
+
+  function peekNonSpace(code, i) {
+    let j = i;
+    while (j < code.length && /\s/.test(code[j])) j++;
+    return code[j] || '';
+  }
+
+  function highlightTs(code) {
+    let i = 0;
+    let out = '';
+
+    while (i < code.length) {
+      const ch = code[i];
+      const ch2 = code[i + 1] || '';
+
+      // Line comment
+      if (ch === '/' && ch2 === '/') {
+        let j = i + 2;
+        while (j < code.length && code[j] !== '\n') j++;
+        const tok = code.slice(i, j);
+        out += '<span class="tok-com">' + escapeHtml(tok) + '</span>';
+        i = j;
+        continue;
+      }
+
+      // Block comment
+      if (ch === '/' && ch2 === '*') {
+        let j = i + 2;
+        while (j < code.length && !(code[j] === '*' && code[j + 1] === '/')) j++;
+        j = Math.min(code.length, j + 2);
+        const tok = code.slice(i, j);
+        out += '<span class="tok-com">' + escapeHtml(tok) + '</span>';
+        i = j;
+        continue;
+      }
+
+      // Strings: ', ", `
+      if (ch === '\'' || ch === '"' || ch === '`') {
+        const quote = ch;
+        let j = i + 1;
+        while (j < code.length) {
+          const cj = code[j];
+          if (cj === '\\') {
+            j += 2;
+            continue;
+          }
+          if (cj === quote) {
+            j += 1;
+            break;
+          }
+          j += 1;
+        }
+        const tok = code.slice(i, j);
+        out += '<span class="tok-str">' + escapeHtml(tok) + '</span>';
+        i = j;
+        continue;
+      }
+
+      // Decorators: @ccclass
+      if (ch === '@') {
+        let j = i + 1;
+        while (j < code.length && (isIdent(code[j]) || code[j] === '.')) j++;
+        const tok = code.slice(i, j);
+        out += '<span class="tok-deco">' + escapeHtml(tok) + '</span>';
+        i = j;
+        continue;
+      }
+
+      // Numbers
+      if (isDigit(ch)) {
+        let j = i + 1;
+        while (j < code.length && (isDigit(code[j]) || code[j] === '.')) j++;
+        const tok = code.slice(i, j);
+        out += '<span class="tok-num">' + escapeHtml(tok) + '</span>';
+        i = j;
+        continue;
+      }
+
+      // Identifiers / keywords / function calls
+      if (isIdentStart(ch)) {
+        let j = i + 1;
+        while (j < code.length && isIdent(code[j])) j++;
+        const word = code.slice(i, j);
+        const next = peekNonSpace(code, j);
+
+        if (TS_KEYWORDS.has(word)) {
+          out += '<span class="tok-kw">' + escapeHtml(word) + '</span>';
+        } else if (TS_TYPES.has(word)) {
+          out += '<span class="tok-ty">' + escapeHtml(word) + '</span>';
+        } else if (next === '(') {
+          out += '<span class="tok-fn">' + escapeHtml(word) + '</span>';
+        } else {
+          out += escapeHtml(word);
+        }
+
+        i = j;
+        continue;
+      }
+
+      // Everything else
+      out += escapeHtml(ch);
+      i += 1;
+    }
+
+    return out;
+  }
+
+  function addLineNumbers(pre, codeText) {
+    const lines = codeText.split(/\n/).length;
+    const gutter = document.createElement('div');
+    gutter.className = 'gutter';
+    const frag = document.createDocumentFragment();
+    for (let i = 1; i <= lines; i++) {
+      const d = document.createElement('div');
+      d.textContent = String(i);
+      frag.appendChild(d);
+    }
+    gutter.appendChild(frag);
+    pre.appendChild(gutter);
+  }
+
+  function installCopyButton(pre, codeEl) {
+    const btn = document.createElement('button');
+    btn.className = 'copy';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', async () => {
+      const text = (codeEl.textContent || '').replace(/\u00a0/g, ' ');
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = 'Copied';
+        setTimeout(() => (btn.textContent = 'Copy'), 900);
+      } catch {
+        btn.textContent = 'No clipboard';
+        setTimeout(() => (btn.textContent = 'Copy'), 900);
+      }
+    });
+    pre.appendChild(btn);
+  }
+
+  // Apply TS highlighting + line numbers
+  document.querySelectorAll('pre > code.language-ts').forEach((codeEl) => {
+    const pre = codeEl.parentElement;
+    const raw = codeEl.textContent || '';
+    codeEl.innerHTML = highlightTs(raw);
+    addLineNumbers(pre, raw);
+    installCopyButton(pre, codeEl);
+  });
+
+  // ---------- Keyword/term highlighting in descriptions ----------
+
+  const TERMS = [
+    'ServiceLocator', 'EventBus', 'FSM', 'MVVM-lite', 'AppController', 'FrameworkBootstrap',
+    'ISceneService', 'Persist Root Node', 'single-scene', 'multi-scene', 'preloadScene', 'loadScene',
+    'pooling', 'NodePool', 'IPoolable', 'preload'
+  ];
+
+  // Build one regex, longer terms first
+  const TERM_RE = new RegExp(
+    '(' + TERMS
+      .slice()
+      .sort((a, b) => b.length - a.length)
+      .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .join('|') + ')',
+    'g'
+  );
+
+  function shouldInlineCode(term) {
+    return term.includes('-') || term.startsWith('I') || term.includes('(') || term.includes('.') || term.includes('Scene');
+  }
+
+  function wrapTermsInTextNode(node) {
+    const text = node.nodeValue;
+    if (!text || !TERM_RE.test(text)) return;
+
+    // Reset regex state
+    TERM_RE.lastIndex = 0;
+
+    const frag = document.createDocumentFragment();
+    let last = 0;
+    let m;
+    while ((m = TERM_RE.exec(text))) {
+      const start = m.index;
+      const end = start + m[0].length;
+
+      if (start > last) {
+        frag.appendChild(document.createTextNode(text.slice(last, start)));
+      }
+
+      const span = document.createElement('span');
+      const term = m[0];
+      span.className = shouldInlineCode(term) ? 'inline-code' : 'hl-term';
+      span.textContent = term;
+      frag.appendChild(span);
+
+      last = end;
+    }
+
+    if (last < text.length) {
+      frag.appendChild(document.createTextNode(text.slice(last)));
+    }
+
+    node.parentNode.replaceChild(frag, node);
+  }
+
+  function walkAndWrapTerms(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => {
+        // Skip inside code/pre
+        if (!n.parentElement) return NodeFilter.FILTER_REJECT;
+        if (n.parentElement.closest('pre, code')) return NodeFilter.FILTER_REJECT;
+        // Skip if empty
+        if (!n.nodeValue || !n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(wrapTermsInTextNode);
+  }
+
+  document.querySelectorAll('p, li, small').forEach((el) => walkAndWrapTerms(el));
+})();
