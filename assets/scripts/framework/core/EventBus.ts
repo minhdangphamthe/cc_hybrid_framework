@@ -14,22 +14,22 @@ class OffHandle implements IDisposable {
  * - emit() synchronous by default (predictable)
  */
 export class EventBus<E extends EventMap> {
-  private _handlers = new Map<keyof E, Set<Function>>();
+  private _handlers = new Map<keyof E, Set<Handler<E[keyof E]>>>();
 
   on<K extends keyof E>(event: K, handler: Handler<E[K]>): IDisposable {
     let set = this._handlers.get(event);
     if (!set) {
-      set = new Set();
+      set = new Set<Handler<E[K]>>();
       this._handlers.set(event, set);
     }
-    set.add(handler as any);
+    set.add(handler);
     return new OffHandle(() => this.off(event, handler));
   }
 
   off<K extends keyof E>(event: K, handler: Handler<E[K]>): void {
     const set = this._handlers.get(event);
     if (!set) return;
-    set.delete(handler as any);
+    set.delete(handler);
     if (set.size === 0) this._handlers.delete(event);
   }
 

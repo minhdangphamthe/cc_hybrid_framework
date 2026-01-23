@@ -23,7 +23,7 @@ export class UIRouter {
     node.active = true;
     this._stack.push(node);
 
-    const view = node.getComponent(UIView) as any as IUIView;
+    const view = node.getComponent(UIView) as IUIView;
     view?.onShow?.();
     return node;
   }
@@ -31,7 +31,7 @@ export class UIRouter {
   pop(): void {
     const node = this._stack.pop();
     if (!node || !node.isValid) return;
-    const view = node.getComponent(UIView) as any as IUIView;
+    const view = node.getComponent(UIView) as IUIView;
     view?.onHide?.();
     view?.onDestroyView?.();
     node.destroy();

@@ -24,7 +24,7 @@ export class CocosAssetsService implements IAssetsService {
     const bundle = opts?.bundle ? await this.loadBundle(opts.bundle) : null;
     return new Promise((resolve, reject) => {
       const loader = bundle ?? resources;
-      loader.load(path, type as any, (err: any, asset: any) => {
+      loader.load(path, type, (err: any, asset: any) => {
         if (err || !asset) reject(err ?? new Error('asset null'));
         else resolve(asset as T);
       });

@@ -39,7 +39,7 @@ export class RecycleListView extends Component {
   }
 
   setAdapter<T>(adapter: IListAdapter<T>): void {
-    this._adapter = adapter as any;
+    this._adapter = adapter;
     this._rebuild();
   }
 

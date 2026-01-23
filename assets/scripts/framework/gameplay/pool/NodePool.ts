@@ -55,7 +55,7 @@ export class NodePool {
     const comps = node.getComponentsInChildren(Component);
     for (const c of comps) {
       const p = c as unknown as IPoolable;
-      const fn = (p as any)[method];
+      const fn = (p)[method];
       if (typeof fn === 'function') {
         try { fn.call(p, data); } catch {}
       }

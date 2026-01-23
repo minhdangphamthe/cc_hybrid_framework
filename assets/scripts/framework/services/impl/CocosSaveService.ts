@@ -48,7 +48,7 @@ export class CocosSaveService implements ISaveService {
 
   clearAll(prefix = this._prefix): void {
     // localStorage has no prefix enumeration helper; brute-force keys
-    const ls = sys.localStorage as any;
+    const ls = sys.localStorage;
     const len = ls.length ?? 0;
     const keys: string[] = [];
     for (let i = 0; i < len; i++) {
