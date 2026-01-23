@@ -267,33 +267,48 @@
 
       <section id="coding">
         <h2>7) Coding standard</h2>
-        <div class="card">
-          <div class="markdown">## Coding standard (project-wide)
+        <div class="grid">
+          <div class="card">
+            <h3>Formatting</h3>
+            <ul>
+              <li>Indentation: <b>2 spaces</b>, no tabs.</li>
+              <li>Quotes: <b>single quotes</b> for strings.</li>
+              <li>Semicolons: <b>required</b>.</li>
+              <li>Spacing:
+                <ul>
+                  <li><span class="kbd">if (cond) { ... }</span> (space after keywords, space before <span class="kbd">{</span>)</li>
+                  <li><span class="kbd">{ a: 1, b: 2 }</span> (spaces inside object braces)</li>
+                  <li><span class="kbd">fn(a, b)</span> (space after commas)</li>
+                </ul>
+              </li>
+              <li>Trailing commas: <b>recommended</b> for multi-line objects/arrays.</li>
+            </ul>
+          </div>
 
-Formatting
-- Indentation: **2 spaces**, no tabs.
-- Quotes: **single quotes** for strings.
-- Semicolons: **required**.
-- Spacing:
-  - `if (cond) { ... }` (space after keywords, space before `{`)
-  - `{ a: 1, b: 2 }` (spaces inside object braces)
-  - `fn(a, b)` (space after commas)
-- Trailing commas: **recommended** for multi-line objects/arrays.
+          <div class="card">
+            <h3>Naming</h3>
+            <ul>
+              <li>Files:
+                <ul>
+                  <li>Components / Services: <span class="kbd">PascalCase.ts</span> (e.g. <span class="kbd">AppController.ts</span>).</li>
+                  <li>Interfaces: <span class="kbd">IThing.ts</span> (e.g. <span class="kbd">IAudioService.ts</span>).</li>
+                </ul>
+              </li>
+              <li>Types/classes/enums: <span class="kbd">PascalCase</span>.</li>
+              <li>Methods/functions/variables: <span class="kbd">camelCase</span>.</li>
+              <li>Private fields: <span class="kbd">private _likeThis</span> (leading underscore).</li>
+              <li>Public fields: no underscore.</li>
+              <li>Constants: <span class="kbd">UPPER_SNAKE_CASE</span> (rare; prefer <span class="kbd">const</span> at module scope when needed).</li>
+            </ul>
+          </div>
+        </div>
 
-Naming
-- Files:
-  - Components / Services: `PascalCase.ts` (e.g. `AppController.ts`).
-  - Interfaces: `IThing.ts` (e.g. `IAudioService.ts`).
-- Types/classes/enums: `PascalCase`.
-- Methods/functions/variables: `camelCase`.
-- Private fields: `private _likeThis` (leading underscore).
-- Public fields: no underscore.
-- Constants: `UPPER_SNAKE_CASE` (rare; prefer `const` at module scope when needed).
-
-Comments
-- English only.
-- Explain **why** (intent/constraints), not the obvious &quot;what&quot;.
-</div>
+        <div class="card" style="margin-top: 14px;">
+          <h3>Comments</h3>
+          <ul>
+            <li>English only.</li>
+            <li>Explain <b>why</b> (intent/constraints), not the obvious “what”.</li>
+          </ul>
         </div>
       </section>
 
@@ -302,19 +317,26 @@ Comments
 
         <details open>
           <summary>FrameworkBootstrap (v0.1.2) - persistent core + auto AppController</summary>
-          <pre><code class="language-ts">import { _decorator, Component, director } from 'cc';
+          <pre><code class="language-ts">import { _decorator, Component, director, Enum } from 'cc';
 import { ServiceLocator } from './core/ServiceLocator';
 import { EventBus } from './core/EventBus';
 import { Services } from './services/ServiceTokens';
 import { CocosSceneService } from './services/impl/CocosSceneService';
 import { AppController } from './app/AppController';
-import { AppSceneMode, type AppSceneModeName } from './app/AppConstants';
+import { AppSceneModeEditor, appSceneModeNameFromEditor } from './app/AppConstants';
+
+const { ccclass, property } = _decorator;
 
 @ccclass('FrameworkBootstrap')
 export class FrameworkBootstrap extends Component {
   persistAcrossScenes = true;
   autoAddAppController = true;
-  sceneMode: AppSceneModeName = AppSceneMode.Single;
+
+  @property({
+    type: Enum(AppSceneModeEditor),
+    tooltip: 'App mode: Single uses one scene; Multi loads scenes via ISceneService.',
+  })
+  sceneMode = AppSceneModeEditor.Single;
 
   onLoad(): void {
     if (this.persistAcrossScenes) {
@@ -327,7 +349,8 @@ export class FrameworkBootstrap extends Component {
 
     if (this.autoAddAppController) {
       const app = this.getComponent(AppController) ?? this.addComponent(AppController);
-      app.configure({ mode: this.sceneMode });
+      const mode = appSceneModeNameFromEditor(this.sceneMode);
+      app.configure({ mode });
     }
   }
 }</code></pre>
@@ -341,6 +364,8 @@ import { EventBus } from '../framework/core/EventBus';
 import { Services } from '../framework/services/ServiceTokens';
 import { AppEvents } from '../framework/app/AppEvents';
 import { AppEvent } from '../framework/app/AppConstants';
+
+const { ccclass } = _decorator;
 
 @ccclass('HomeView')
 export class HomeView extends Component {
@@ -364,6 +389,8 @@ import { EventBus } from '../framework/core/EventBus';
 import { Services } from '../framework/services/ServiceTokens';
 import { AppEvents } from '../framework/app/AppEvents';
 import { AppEvent } from '../framework/app/AppConstants';
+
+const { ccclass } = _decorator;
 
 @ccclass('GameplayController')
 export class GameplayController extends Component {

@@ -1,7 +1,5 @@
 import { SceneMode } from './AppConstants';
 
-// export type SceneMode = AppSceneModeName;
-
 export interface AppSceneNames {
   home: string;
   gameplay: string;

@@ -28,5 +28,3 @@ export enum SceneMode {
   Single = 'single',
   Multi = 'multi',
 }
-
-// export type AppSceneModeName = typeof AppSceneMode[keyof typeof AppSceneMode];
