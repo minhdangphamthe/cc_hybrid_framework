@@ -7,6 +7,7 @@ import { AppState } from './AppConstants';
 export interface AppEvents {
   'app/play': {};
   'app/restart': {};
+  'app/result': {};
   'app/backToHome': {};
   'app/stateChanged': { state: AppState; data?: any };
 }

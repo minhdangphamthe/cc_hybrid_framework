@@ -8,6 +8,7 @@
 export const AppEvent = {
   Play: 'app/play',
   Restart: 'app/restart',
+  Result: 'app/result',
   BackToHome: 'app/backToHome',
   StateChanged: 'app/stateChanged',
 } as const;

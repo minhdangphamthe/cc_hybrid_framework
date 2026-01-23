@@ -7,8 +7,8 @@ import { AppEvent } from '../framework/app/AppConstants';
 
 const { ccclass } = _decorator;
 
-@ccclass('GameplayController')
-export class GameplayController extends Component {
+@ccclass('ResultScreenView')
+export class ResultScreenView extends Component {
   private _bus!: EventBus<AppEvents>;
 
   onLoad(): void {
@@ -19,7 +19,7 @@ export class GameplayController extends Component {
     this._bus.emit(AppEvent.BackToHome, {});
   }
   
-  onClickNext(): void {
-    this._bus.emit(AppEvent.Result, {});
+  onClickRetry(): void {
+    this._bus.emit(AppEvent.Restart, {});
   }
 }

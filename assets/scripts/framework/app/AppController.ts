@@ -81,14 +81,25 @@ export class AppController extends Component {
           await this.safeLoadScene(this._opts.scenes.gameplay);
         }
 
-        // In production: your GameplayController should emit app/restart or app/backToHome.
-        const which = await this.waitAny([AppEvent.Restart, AppEvent.BackToHome] as const);
+        // In production: your GameplayController should emit app/restart, app/result, or app/backToHome.
+        const which = await this.waitAny([AppEvent.Restart, AppEvent.Result, AppEvent.BackToHome] as const);
         if (which === AppEvent.Restart) {
           // Most games restart gameplay directly.
           this._fsm.transition(AppState.Gameplay);
-        } else {
-          this._fsm.transition(AppState.Home);
+          return;
         }
+
+        if (which === AppEvent.Result) {
+          // Go to Result when available; otherwise fall back to Home.
+          if (this._opts.mode === SceneMode.Multi && !this._opts.scenes?.result) {
+            this._fsm.transition(AppState.Home);
+          } else {
+            this._fsm.transition(AppState.Result);
+          }
+          return;
+        }
+
+        this._fsm.transition(AppState.Home);
       },
       onExit: () => {
         this.unscheduleAllCallbacks();
@@ -106,8 +117,8 @@ export class AppController extends Component {
         }
 
         // Wait user action
-        await this.waitEvent(AppEvent.BackToHome);
-        this._fsm.transition(AppState.Home);
+        const which = await this.waitAny([AppEvent.Restart, AppEvent.BackToHome] as const);
+        this._fsm.transition(which === AppEvent.Restart ? AppState.Gameplay : AppState.Home);
       },
     };
 
