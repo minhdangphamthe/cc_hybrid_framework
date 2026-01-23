@@ -1,4 +1,4 @@
-import { assetManager, Asset, AssetManager, Prefab, resources, SpriteFrame, Texture2D, __private } from 'cc';
+import { assetManager, Asset, AssetManager, Prefab, resources, SpriteFrame, Texture2D } from 'cc';
 import { IAssetsService, LoadOptions } from '../interfaces/IAssetsService';
 
 /**
@@ -20,7 +20,7 @@ export class CocosAssetsService implements IAssetsService {
     });
   }
 
-  async load<T extends Asset>(path: string, type: __private.__types_globals__Constructor<T>, opts?: LoadOptions): Promise<T> {
+  async load<T extends Asset>(path: string, type: __private._types_globals__Constructor<T>, opts?: LoadOptions): Promise<T> {
     const bundle = opts?.bundle ? await this.loadBundle(opts.bundle) : null;
     return new Promise((resolve, reject) => {
       const loader = bundle ?? resources;

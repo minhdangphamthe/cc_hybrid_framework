@@ -14,12 +14,14 @@ export * from './services/interfaces/IAdsService';
 export * from './services/interfaces/IAnalyticsService';
 export * from './services/interfaces/IPushNotificationService';
 export * from './services/interfaces/ITimeService';
+export * from './services/interfaces/ISceneService';
 
 export * from './services/impl/CocosAssetsService';
 export * from './services/impl/CocosSaveService';
 export * from './services/impl/CocosInputService';
 export * from './services/impl/FetchNetworkService';
 export * from './services/impl/JsTimeService';
+export * from './services/impl/CocosSceneService';
 
 export * from './services/impl/NoopAudioService';
 export * from './services/impl/NoopAdsService';
@@ -32,3 +34,7 @@ export * from './gameplay/pool/IPoolable';
 export * from './ui/mvvm/ObservableValue';
 export * from './ui/mvvm/ViewModel';
 export * from './ui/router/UIRouter';
+
+export * from './app/AppController';
+export * from './app/AppEvents';
+export * from './app/AppTypes';

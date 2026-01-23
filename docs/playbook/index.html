@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hybrid Framework Playbook - Single-scene vs Multi-scene</title>
+  <style>
+
+    :root {
+      --bg: #0b1020;
+      --panel: #101a33;
+      --text: #e6e9f2;
+      --muted: #a7b0c2;
+      --line: rgba(255,255,255,0.08);
+      --accent: #7dd3fc;
+      --accent2: #a78bfa;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --codebg: rgba(0,0,0,0.25);
+      --shadow: 0 10px 40px rgba(0,0,0,0.35);
+      --radius: 14px;
+      --radius2: 18px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 10% 10%, rgba(167,139,250,0.22), transparent 50%),
+                  radial-gradient(1200px 800px at 80% 0%, rgba(125,211,252,0.18), transparent 55%),
+                  radial-gradient(900px 700px at 70% 90%, rgba(52,211,153,0.10), transparent 55%),
+                  var(--bg);
+    }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 10% 10%, rgba(167,139,250,0.22), transparent 50%),
+                  radial-gradient(1200px 800px at 80% 0%, rgba(125,211,252,0.18), transparent 55%),
+                  radial-gradient(900px 700px at 70% 90%, rgba(52,211,153,0.10), transparent 55%),
+                  var(--bg);
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 0;
+      width: 100vw;
+      height: 100vh;
+      padding: 0;
+      margin: 0;
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
+      .sidebar { position: relative !important; height: auto !important; border-right: none; border-bottom: 1px solid var(--line); }
+      .main { height: auto; min-height: 60vh; border-left: none; }
+    }
+      .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border-right: 1px solid var(--line);
+      border-radius: 0;
+      box-shadow: none;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 18px;
+      height: calc(100vh - 36px);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .side-head {
+      padding: 16px 16px 10px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), transparent);
+    }
+
+    .brand {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      font-size: 14px;
+    }
+
+    .pill {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+    }
+
+    .search { margin-top: 10px; display: flex; gap: 10px; align-items: center; }
+    .search input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.20);
+      color: var(--text);
+      outline: none;
+      font-size: 13px;
+    }
+    .search input::placeholder { color: rgba(231,236,247,0.55); }
+
+    .nav { padding: 10px 10px 14px; overflow: auto; }
+    .nav a {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 12px;
+      color: var(--text);
+      border: 1px solid transparent;
+    }
+    .nav a:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: var(--line);
+      text-decoration: none;
+    }
+    .nav small {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+      line-height: 1.25;
+    }
+
+    .main {
+      height: 100vh;
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      border-left: 1px solid var(--line);
+      border-radius: 0;
+      box-shadow: none;
+      overflow: auto;
+      padding: 26px 26px 90px;
+    }
+
+    h1 { font-size: 28px; margin: 0 0 6px; }
+    .subtitle { color: var(--muted); margin: 0 0 18px; line-height: 1.5; }
+
+    h2 { font-size: 18px; margin-top: 28px; }
+    h3 { font-size: 15px; margin-top: 18px; }
+    p { color: var(--text); line-height: 1.65; margin: 10px 0; }
+    ul { margin: 8px 0 8px 18px; color: var(--text); line-height: 1.65; }
+    li { margin: 6px 0; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: rgba(0,0,0,0.18);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .tag {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    .tag.good { color: var(--good); }
+    .tag.warn { color: var(--warn); }
+    .tag.bad { color: var(--bad); }
+
+    .mode {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      align-items: center;
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .mode label {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.15);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text);
+      user-select: none;
+    }
+    .mode input { accent-color: var(--accent); }
+
+    .callout {
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.18);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin: 12px 0;
+    }
+    .callout .title { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 6px; }
+    .callout .title .dot {
+      width: 10px; height: 10px; border-radius: 99px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(125,211,252,0.15);
+    }
+    .callout.good .title .dot { background: var(--good); box-shadow: 0 0 0 4px rgba(52,211,153,0.16); }
+    .callout.warn .title .dot { background: var(--warn); box-shadow: 0 0 0 4px rgba(251,191,36,0.18); }
+    .callout.bad  .title .dot { background: var(--bad);  box-shadow: 0 0 0 4px rgba(251,113,133,0.18); }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(0,0,0,0.15);
+      padding: 10px 12px;
+      margin: 10px 0;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--text);
+      list-style: none;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary:after {
+      content: '>';
+      float: right;
+      color: var(--muted);
+      transform: rotate(0deg);
+      transition: transform 160ms ease;
+    }
+    details[open] summary:after { transform: rotate(90deg); }
+
+    pre {
+      position: relative;
+      margin: 10px 0;
+      padding: 12px 12px 12px;
+      border-radius: 12px;
+      background: var(--codebg);
+      border: 1px solid var(--line);
+      overflow: auto;
+    }
+    code { font-family: var(--mono); font-size: 12.5px; line-height: 1.55; color: #f1f5ff; }
+    .copy {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.35);
+      color: var(--text);
+      padding: 6px 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .copy:hover { background: rgba(255,255,255,0.06); }
+    .copy:active { transform: translateY(1px); }
+
+    .two-col { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 14px; align-items: start; }
+    @media (max-width: 980px) { .two-col { grid-template-columns: 1fr; } }
+
+    .diagram {
+      width: 100%;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.12);
+      padding: 10px;
+    }
+
+    .kbd {
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.25);
+      color: var(--muted);
+    }
+
+    .mode-only { display: none; }
+    .mode-single .show-single { display: block; }
+    .mode-multi .show-multi { display: block; }
+
+    .markdown {
+      white-space: pre-wrap;
+      font-family: var(--font);
+      line-height: 1.6;
+      color: var(--text);
+    }
+    .markdown h4 { margin: 8px 0 6px; }
+  
+
+    /* --- TypeScript syntax highlighting (lightweight, no deps) --- */
+    .tok-kw { color: var(--accent); }
+    .tok-ty { color: var(--accent2); }
+    .tok-str { color: #86efac; }
+    .tok-num { color: #fde68a; }
+    .tok-com { color: rgba(167,176,194,0.75); font-style: italic; }
+    .tok-fn { color: #f9a8d4; }
+    .tok-deco { color: #c4b5fd; }
+    .tok-op { color: rgba(230,233,242,0.75); }
+
+    pre { padding-left: 46px; }
+    .gutter {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      bottom: 12px;
+      width: 26px;
+      border-right: 1px solid var(--line);
+      color: rgba(167,176,194,0.55);
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.55;
+      text-align: right;
+      padding-right: 8px;
+      user-select: none;
+      overflow: hidden;
+    }
+    .gutter div { height: 1.55em; }
+
+    .inline-code {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.20);
+      color: rgba(230,233,242,0.92);
+      white-space: nowrap;
+    }
+    .hl-term {
+      border-bottom: 1px dashed rgba(125,211,252,0.55);
+      padding: 0 2px;
+      border-radius: 6px;
+      background: rgba(125,211,252,0.10);
+    }
+
+
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="side-head">
+        <div class="brand">
+          <span>Hybrid Framework Playbook</span>
+          <span class="pill">v0.1.2</span>
+        </div>
+        <div class="search">
+          <input id="q" placeholder="Search... (e.g. persist, preload, fsm, mvvm)" />
+        </div>
+      </div>
+      <nav class="nav" id="nav">
+        <a href="#start" data-text="overview goals architecture"><strong>1) Getting started</strong><small>What this is and how to use it</small></a>
+        <a href="#choose" data-text="choose mode single multi"><strong>2) Choose a mode</strong><small>When to use single vs multi</small></a>
+        <a href="#single" data-text="single scene guide"><strong>3) Single-scene</strong><small>Flow, hierarchy, feature toggles</small></a>
+        <a href="#multi" data-text="multi scene guide persist loadscene"><strong>4) Multi-scene</strong><small>Persistent core + scene loading</small></a>
+        <a href="#unity" data-text="unity scenes additive"><strong>5) Unity habits</strong><small>What Unity teams usually do</small></a>
+        <a href="#guardrails" data-text="guardrails conventions"><strong>6) Guardrails</strong><small>Rules that keep codebase healthy</small></a>
+        <a href="#coding" data-text="coding standard formatting naming"><strong>7) Coding standard</strong><small>Formatting + naming conventions</small></a>
+        <a href="#examples" data-text="code examples bootstrap appcontroller"><strong>8) Code examples</strong><small>Copy/paste friendly snippets</small></a>
+        <a href="#checklist" data-text="shipping checklist"><strong>9) Shipping checklist</strong><small>Before you ship a build</small></a>
+      </nav>
+    </aside>
+
+    <main class="main" id="main">
+      <section id="start">
+        <h1>Single-scene vs Multi-scene Playbook</h1>
+        <p class="subtitle">
+          Goal: help you pick the right scene mode for <b>hypercasual / casual / mid-core</b> games
+          when porting from Unity to Cocos Creator 3.8.x, using the Hybrid Framework
+          (Service Locator + FSM + MVVM-lite).
+        </p>
+
+        <div class="mode" id="modePicker">
+          <span class="tag">View mode</span>
+          <label><input type="radio" name="mode" value="single" checked /> Single-scene</label>
+          <label><input type="radio" name="mode" value="multi" /> Multi-scene</label>
+          <span class="pill">Switch any time</span>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <span class="tag good">Fast iteration</span>
+            <span class="tag warn">Scale concerns</span>
+            <span class="tag bad">Leaks if undisciplined</span>
+            <p style="margin-top: 10px">
+              <b>Single-scene</b> usually wins on speed and simplicity. <b>Multi-scene</b> usually wins on scale.
+              This framework keeps the <b>core persistent</b>, so you can migrate between modes later.
+            </p>
+            <div class="callout warn">
+              <div class="title"><span class="dot"></span>Remember</div>
+              <div>
+                In multi-scene mode, nodes inside a scene are destroyed when you load another scene.
+                Keep your core on a <span class="kbd">Persist Root Node</span>.
+              </div>
+            </div>
+          </div>
+
+          <div class="diagram">
+            <svg viewBox="0 0 840 380" width="100%" height="auto" role="img" aria-label="Architecture diagram">
+              <defs>
+                <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+                  <stop offset="0" stop-color="rgba(125,211,252,0.35)"/>
+                  <stop offset="1" stop-color="rgba(167,139,250,0.25)"/>
+                </linearGradient>
+                <linearGradient id="g2" x1="0" x2="1" y1="0" y2="1">
+                  <stop offset="0" stop-color="rgba(52,211,153,0.22)"/>
+                  <stop offset="1" stop-color="rgba(125,211,252,0.16)"/>
+                </linearGradient>
+              </defs>
+              <rect x="16" y="16" width="808" height="348" rx="18" fill="rgba(0,0,0,0.18)" stroke="rgba(255,255,255,0.10)"/>
+              <text x="36" y="54" fill="rgba(230,233,242,0.9)" font-size="18" font-family="system-ui">Hybrid Architecture</text>
+
+              <rect x="36" y="76" width="250" height="120" rx="14" fill="url(#g1)" stroke="rgba(255,255,255,0.10)"/>
+              <text x="56" y="108" fill="#e6e9f2" font-size="14" font-family="system-ui" font-weight="700">Core (Persistent)</text>
+              <text x="56" y="132" fill="rgba(230,233,242,0.85)" font-size="12" font-family="system-ui">ServiceLocator</text>
+              <text x="56" y="152" fill="rgba(230,233,242,0.85)" font-size="12" font-family="system-ui">EventBus - Lifetime</text>
+              <text x="56" y="172" fill="rgba(230,233,242,0.85)" font-size="12" font-family="system-ui">AppController (App FSM)</text>
+
+              <rect x="310" y="76" width="250" height="120" rx="14" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.10)"/>
+              <text x="330" y="108" fill="#e6e9f2" font-size="14" font-family="system-ui" font-weight="700">Services</text>
+              <text x="330" y="132" fill="rgba(230,233,242,0.85)" font-size="12" font-family="system-ui">Assets - Audio - Save - Network</text>
+              <text x="330" y="152" fill="rgba(230,233,242,0.85)" font-size="12" font-family="system-ui">Ads - Analytics - Push - Scene</text>
+              <text x="330" y="172" fill="rgba(230,233,242,0.85)" font-size="12" font-family="system-ui">Time - Input</text>
+
+              <rect x="584" y="76" width="220" height="120" rx="14" fill="url(#g2)" stroke="rgba(255,255,255,0.10)"/>
+              <text x="604" y="108" fill="#e6e9f2" font-size="14" font-family="system-ui" font-weight="700">Feature Layer</text>
+              <text x="604" y="132" fill="rgba(230,233,242,0.85)" font-size="12" font-family="system-ui">Home / Shop / Gameplay</text>
+              <text x="604" y="152" fill="rgba(230,233,242,0.85)" font-size="12" font-family="system-ui">UI MVVM-lite</text>
+              <text x="604" y="172" fill="rgba(230,233,242,0.85)" font-size="12" font-family="system-ui">InGame FSM - Pooling</text>
+
+              <path d="M286 136 L310 136" stroke="rgba(255,255,255,0.28)" stroke-width="2" />
+              <path d="M560 136 L584 136" stroke="rgba(255,255,255,0.28)" stroke-width="2" />
+              <text x="36" y="238" fill="rgba(230,233,242,0.9)" font-size="13" font-family="system-ui" font-weight="700">Key idea</text>
+              <text x="36" y="264" fill="rgba(230,233,242,0.75)" font-size="12" font-family="system-ui">
+                Core survives scene changes. Features can be nodes (single-scene) or scenes (multi-scene).
+              </text>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section id="choose">
+        <h2>2) Choose a mode</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Single-scene</h3>
+            <span class="tag good">Fast</span>
+            <span class="tag good">Less hitch</span>
+            <span class="tag warn">Scene can bloat</span>
+            <ul>
+              <li>Best for hypercasual and smaller casual games.</li>
+              <li>Great for web / low-end devices because you avoid loadScene hitches.</li>
+              <li>Use FSM to toggle feature root nodes and popups.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Multi-scene</h3>
+            <span class="tag good">Scales well</span>
+            <span class="tag warn">Needs preload discipline</span>
+            <span class="tag warn">Persistence required</span>
+            <ul>
+              <li>Best for bigger casual / mid-core: Home + Shop + Inventory + Gameplay.</li>
+              <li>Easy to split work across teams and unload scene-local objects.</li>
+              <li>Requires a scene loading flow and an asset strategy.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout good">
+          <div class="title"><span class="dot"></span>Recommendation</div>
+          <div>
+            If you need speed while porting from Unity, start with single-scene.
+            When your feature set grows, switch to multi-scene (the persistent core stays the same).
+          </div>
+        </div>
+      </section>
+
+      <section id="single" class="mode-only show-single">
+        <h2>3) Single-scene guide</h2>
+        <p>
+          A single scene (e.g. <b>Main</b>) contains Home UI, gameplay objects, and result popups.
+          AppFlow transitions are implemented by <b>enabling/disabling feature root nodes</b>.
+        </p>
+
+        <div class="callout warn">
+          <div class="title"><span class="dot"></span>Critical rule</div>
+          <div>
+            Avoid sprinkling <span class="kbd">update()</span> everywhere.
+            Centralize ticking in a controller/system runner. Pooling must clean up tweens/timers/listeners on despawn.
+          </div>
+        </div>
+
+        <details>
+          <summary>Recommended hierarchy</summary>
+          <div class="grid">
+            <div class="card">
+              <strong>Hierarchy</strong>
+              <pre><code class="language-ts">MainScene
+-  Framework (persistent)
+    -  FrameworkBootstrap
+    -  AppController
+-  FeatureRoot
+    -  HomeRoot (UI)
+    -  GameplayRoot (world)
+    -  ResultRoot (UI)
+-  UIRoot</code></pre>
+            </div>
+            <div class="card">
+              <strong>Flow</strong>
+              <ul>
+                <li>AppController emits <span class="kbd">app/stateChanged</span></li>
+                <li>HomeRoot listens and emits <span class="kbd">app/play</span> when user taps Play</li>
+                <li>GameplayRoot listens and emits <span class="kbd">app/restart</span> or <span class="kbd">app/backToHome</span></li>
+              </ul>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section id="multi" class="mode-only show-multi">
+        <h2>4) Multi-scene guide</h2>
+        <p>
+          Multi-scene splits your game into scenes: <b>Boot</b>, <b>Home</b>, <b>Gameplay</b>, (optional) <b>Result</b>.
+          The core (Bootstrap + services + AppController) stays on a persistent node.
+        </p>
+
+        <div class="callout warn">
+          <div class="title"><span class="dot"></span>Persistence is required</div>
+          <div>
+            Without persistence, you lose ServiceLocator/EventBus/global state every time you load a scene.
+            FrameworkBootstrap already calls <span class="kbd">director.addPersistRootNode()</span> by default.
+          </div>
+        </div>
+
+        <details>
+          <summary>Recommended scene list</summary>
+          <pre><code class="language-ts">Scenes
+- Boot.scene (only Framework node)
+- Home.scene (Home UI emits app/play)
+- Gameplay.scene (GameplayController emits app/restart/app/backToHome)
+- Result.scene (optional)</code></pre>
+        </details>
+
+        <details>
+          <summary>Preload & loading (practical tips)</summary>
+          <ul>
+            <li>Use <span class="kbd">ISceneService.preloadScene</span> to get progress.</li>
+            <li>Loading UI can be a persistent overlay or part of the Boot scene.</li>
+            <li>Preload bundles per feature: core in Boot, gameplay bundle when entering Gameplay.</li>
+          </ul>
+        </details>
+      </section>
+
+      <section id="unity">
+        <h2>5) Unity habits</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>What Unity teams often do</h3>
+            <ul>
+              <li>Hypercasual: frequently <b>single-scene + managers/FSM</b>.</li>
+              <li>Casual/Mid-core: often <b>multi-scene</b> or <b>hybrid</b> (persistent core + additive scenes).</li>
+              <li>Additive scenes are commonly used to separate UI, lighting, and level content.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>When porting to Cocos</h3>
+            <ul>
+              <li>Single-scene tends to feel smoother on web/low-end devices.</li>
+              <li>Multi-scene requires stronger preload discipline to avoid hitching.</li>
+              <li>Keep gameplay logic engine-agnostic via service interfaces.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="guardrails">
+        <h2>6) Guardrails</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Gameplay must not call UI directly</h3>
+            <p>Gameplay emits events. UI subscribes and renders.</p>
+          </div>
+          <div class="card">
+            <h3>Services must not import game code</h3>
+            <p>Infrastructure only. Game/feature code depends on services, not the other way around.</p>
+          </div>
+          <div class="card">
+            <h3>Pooling must clean up</h3>
+            <p>Despawn = stop tweens/timers/listeners + reset state. Use IPoolable.</p>
+          </div>
+          <div class="card">
+            <h3>Only one AppController</h3>
+            <p>AppFlow FSM lives in a single place. Avoid multiple managers fighting each other.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="coding">
+        <h2>7) Coding standard</h2>
+        <div class="card">
+          <div class="markdown">## Coding standard (project-wide)
+
+Formatting
+- Indentation: **2 spaces**, no tabs.
+- Quotes: **single quotes** for strings.
+- Semicolons: **required**.
+- Spacing:
+  - `if (cond) { ... }` (space after keywords, space before `{`)
+  - `{ a: 1, b: 2 }` (spaces inside object braces)
+  - `fn(a, b)` (space after commas)
+- Trailing commas: **recommended** for multi-line objects/arrays.
+
+Naming
+- Files:
+  - Components / Services: `PascalCase.ts` (e.g. `AppController.ts`).
+  - Interfaces: `IThing.ts` (e.g. `IAudioService.ts`).
+- Types/classes/enums: `PascalCase`.
+- Methods/functions/variables: `camelCase`.
+- Private fields: `private _likeThis` (leading underscore).
+- Public fields: no underscore.
+- Constants: `UPPER_SNAKE_CASE` (rare; prefer `const` at module scope when needed).
+
+Comments
+- English only.
+- Explain **why** (intent/constraints), not the obvious &quot;what&quot;.
+</div>
+        </div>
+      </section>
+
+      <section id="examples">
+        <h2>8) Code examples</h2>
+
+        <details open>
+          <summary>FrameworkBootstrap (v0.1.2) - persistent core + auto AppController</summary>
+          <pre><code class="language-ts">import { _decorator, Component, director } from 'cc';
+import { ServiceLocator } from './core/ServiceLocator';
+import { EventBus } from './core/EventBus';
+import { Services } from './services/ServiceTokens';
+import { CocosSceneService } from './services/impl/CocosSceneService';
+import { AppController } from './app/AppController';
+
+@ccclass('FrameworkBootstrap')
+export class FrameworkBootstrap extends Component {
+  persistAcrossScenes = true;
+  autoAddAppController = true;
+  sceneMode: 'single' | 'multi' = 'single';
+
+  onLoad(): void {
+    if (this.persistAcrossScenes) {
+      director.addPersistRootNode(this.node);
+    }
+
+    ServiceLocator.register('EventBus', new EventBus&lt;any&gt;());
+    ServiceLocator.register(Services.Scene, new CocosSceneService());
+
+    if (this.autoAddAppController) {
+      const app = this.getComponent(AppController) ?? this.addComponent(AppController);
+      app.configure({ mode: this.sceneMode });
+    }
+  }
+}</code></pre>
+        </details>
+
+        <details>
+          <summary>Home UI: emit app/play</summary>
+          <pre><code class="language-ts">import { _decorator, Component } from 'cc';
+import { ServiceLocator } from '../framework/core/ServiceLocator';
+import { EventBus } from '../framework/core/EventBus';
+import { AppEvents } from '../framework/app/AppEvents';
+
+@ccclass('HomeView')
+export class HomeView extends Component {
+  private _bus!: EventBus&lt;AppEvents&gt;;
+
+  onLoad(): void {
+    this._bus = ServiceLocator.resolve('EventBus');
+  }
+
+  onClickPlay(): void {
+    this._bus.emit('app/play', {});
+  }
+}</code></pre>
+        </details>
+
+        <details>
+          <summary>Gameplay: restart or go back home</summary>
+          <pre><code class="language-ts">import { _decorator, Component } from 'cc';
+import { ServiceLocator } from '../framework/core/ServiceLocator';
+import { EventBus } from '../framework/core/EventBus';
+import { AppEvents } from '../framework/app/AppEvents';
+
+@ccclass('GameplayController')
+export class GameplayController extends Component {
+  private _bus!: EventBus&lt;AppEvents&gt;;
+
+  onLoad(): void {
+    this._bus = ServiceLocator.resolve('EventBus');
+  }
+
+  onUserDie(): void {
+    this._bus.emit('app/restart', {});
+  }
+
+  onUserBackHome(): void {
+    this._bus.emit('app/backToHome', {});
+  }
+}</code></pre>
+        </details>
+      </section>
+
+      <section id="checklist">
+        <h2>9) Shipping checklist</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Performance</h3>
+            <ul>
+              <li>Centralize update loops; avoid hundreds of component updates per frame.</li>
+              <li>Pool frequently spawned prefabs.</li>
+              <li>Preload bundles per feature/scene.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Stability</h3>
+            <ul>
+              <li>Own EventBus subscriptions via lifetime/disposables.</li>
+              <li>Guard async loads when the scene changes.</li>
+              <li>Persistent node should only keep core systems, not scene objects.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Meta-game</h3>
+            <ul>
+              <li>Use MVVM-lite for HUD/popup logic.</li>
+              <li>Keep theme/skin data-driven (avoid hardcoded asset references in VM).</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Unity porting</h3>
+            <ul>
+              <li>Keep domain logic in pure TypeScript (no engine dependency).</li>
+              <li>Map Unity systems to service interfaces.</li>
+              <li>Prefer composition over deep inheritance.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  
+  <script>
+    const body = document.body;
+    const nav = document.getElementById('nav');
+    const q = document.getElementById('q');
+    const modePicker = document.getElementById('modePicker');
+
+    function setMode(mode) {
+      body.classList.toggle('mode-single', mode === 'single');
+      body.classList.toggle('mode-multi', mode === 'multi');
+      localStorage.setItem('hf_mode', mode);
+    }
+
+    const savedMode = localStorage.getItem('hf_mode') || 'single';
+    setMode(savedMode);
+    modePicker.querySelectorAll('input[name="mode"]').forEach((r) => {
+      r.checked = r.value === savedMode;
+      r.addEventListener('change', () => setMode(r.value));
+    });
+
+    q.addEventListener('input', () => {
+      const term = q.value.trim().toLowerCase();
+      nav.querySelectorAll('a').forEach((a) => {
+        const hay = (a.getAttribute('data-text') || a.textContent || '').toLowerCase();
+        a.style.display = term === '' || hay.includes(term) ? 'block' : 'none';
+      });
+    });
+
+    // --- Lightweight TypeScript syntax highlighter (no external deps) ---
+    const TS_KEYWORDS = new Set([
+      'import','from','export','default','class','interface','type','extends','implements',
+      'public','private','protected','readonly','static','async','await','return','new',
+      'const','let','var','if','else','for','while','do','switch','case','break','continue',
+      'try','catch','finally','throw','typeof','instanceof','in','as','void','this','super',
+      'true','false','null','undefined'
+    ]);
+
+    const TS_TYPES = new Set([
+      'string','number','boolean','any','unknown','never','void','object','Record','Partial','Promise'
+    ]);
+
+    function escapeHtml(s) {
+      return s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function highlightTs(code) {
+      // Step 1: escape
+      let s = escapeHtml(code);
+
+      // Step 2: comments
+      s = s.replace(/(\/\/.*?$)/gm, '<span class="tok-com">$1</span>');
+      s = s.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="tok-com">$1</span>');
+
+      // Step 3: strings (single, double, template)
+      s = s.replace(/(`(?:\\`|[^`])*`)/g, '<span class="tok-str">$1</span>');
+      s = s.replace(/('(?:\\'|[^'])*')/g, '<span class="tok-str">$1</span>');
+      s = s.replace(/("(?:\\"|[^"])*")/g, '<span class="tok-str">$1</span>');
+
+      // Step 4: decorators
+      s = s.replace(/(^|\s)(@[A-Za-z_][A-Za-z0-9_\.]*)/g, '$1<span class="tok-deco">$2</span>');
+
+      // Step 5: numbers
+      s = s.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="tok-num">$1</span>');
+
+      // Step 6: function calls (foo()
+      s = s.replace(/\b([A-Za-z_][A-Za-z0-9_]*)\s*(?=\()/g, '<span class="tok-fn">$1</span>');
+
+      // Step 7: keywords & types
+      s = s.replace(/\b([A-Za-z_][A-Za-z0-9_]*)\b/g, (m, w) => {
+        if (TS_KEYWORDS.has(w)) return '<span class="tok-kw">' + w + '</span>';
+        if (TS_TYPES.has(w)) return '<span class="tok-ty">' + w + '</span>';
+        return w;
+      });
+
+      return s;
+    }
+
+    function addLineNumbers(pre, codeText) {
+      const lines = codeText.split(/\n/).length;
+      const gutter = document.createElement('div');
+      gutter.className = 'gutter';
+      const frag = document.createDocumentFragment();
+      for (let i = 1; i <= lines; i++) {
+        const d = document.createElement('div');
+        d.textContent = String(i);
+        frag.appendChild(d);
+      }
+      gutter.appendChild(frag);
+      pre.appendChild(gutter);
+    }
+
+    // Apply TS highlighting to code blocks
+    document.querySelectorAll('pre > code.language-ts').forEach((codeEl) => {
+      const pre = codeEl.parentElement;
+      const raw = codeEl.textContent || '';
+      codeEl.innerHTML = highlightTs(raw);
+      addLineNumbers(pre, raw);
+    });
+
+    // Copy buttons for code blocks (use raw text, not highlighted HTML)
+    document.querySelectorAll('pre > code').forEach((codeEl) => {
+      const pre = codeEl.parentElement;
+      const btn = document.createElement('button');
+      btn.className = 'copy';
+      btn.type = 'button';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', async () => {
+        const text = (codeEl.textContent || '').replace(/\u00a0/g, ' ');
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.textContent = 'Copied';
+          setTimeout(() => (btn.textContent = 'Copy'), 900);
+        } catch {
+          btn.textContent = 'No clipboard';
+          setTimeout(() => (btn.textContent = 'Copy'), 900);
+        }
+      });
+      pre.appendChild(btn);
+    });
+
+    // --- Highlight key terms in descriptions (not inside code blocks) ---
+    const TERMS = [
+      'ServiceLocator','EventBus','FSM','MVVM-lite','AppController','FrameworkBootstrap',
+      'ISceneService','Persist Root Node','single-scene','multi-scene','preloadScene','loadScene',
+      'pooling','NodePool','IPoolable','preload'
+    ];
+
+    function wrapTerms(el) {
+      if (!el || !el.textContent) return;
+      if (el.dataset && el.dataset.hlDone === '1') return;
+
+      const text = el.textContent;
+      const sorted = TERMS.slice()
+        .sort((a, b) => b.length - a.length)
+        .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+      const re = new RegExp('\\b(' + sorted.join('|') + ')\\b', 'g');
+
+      const htmlText = escapeHtml(text).replace(re, (m) => {
+        const isCodey = m.includes('(') || m.includes('.') || m.includes('-') || m.startsWith('I');
+        const cls = isCodey ? 'inline-code' : 'hl-term';
+        return '<span class="' + cls + '">' + m + '</span>';
+      });
+
+      el.innerHTML = htmlText;
+      if (el.dataset) el.dataset.hlDone = '1';
+    }
+
+    document.querySelectorAll('p, li, small').forEach((el) => {
+      if (el.closest('pre') || el.closest('code')) return;
+      wrapTerms(el);
+    });
+  </script>
+
+</body>
+</html>

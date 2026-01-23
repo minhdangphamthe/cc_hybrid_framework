@@ -9,6 +9,7 @@ export const Services = {
   Analytics: 'Analytics',
   Push: 'Push',
   Time: 'Time',
+  Scene: 'Scene',
 } as const;
 
 export type ServiceName = typeof Services[keyof typeof Services];

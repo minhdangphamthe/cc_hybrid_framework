@@ -3,47 +3,40 @@ import { IPoolable } from './IPoolable';
 
 /**
  * Simple prefab pool.
- * - Use component implementing IPoolable for cleanup.
- * - Ownership rule: Pool owns spawned nodes.
+ * Ownership rule: Pool owns spawned nodes.
+ *
+ * Cleanup discipline:
+ * - Implement IPoolable on components that need reset/cleanup.
+ * - Prefer to cleanup tweens/timers/event subscriptions in onDespawn().
  */
 export class NodePool {
   private _items: Node[] = [];
 
-  constructor(private _prefab: Prefab, private _initialSize = 0) {
-    for (let i = 0; i < _initialSize; i++) {
-      this._items.push(this._create());
+  constructor(private readonly _prefab: Prefab, private readonly _initialSize = 0) {
+    for (let i = 0; i < initialSize; i++) {
+      this._items.push(this.create());
     }
   }
 
-  private _create(): Node {
+  private create(): Node {
     const n = instantiate(this._prefab);
     n.active = false;
     return n;
   }
 
   spawn(parent?: Node, data?: any): Node {
-    const node = this._items.pop() ?? this._create();
+    const node = this._items.pop() ?? this.create();
     if (parent) node.setParent(parent);
     node.active = true;
 
-    // call IPoolable if present
-    // Traverse all components and call onSpawn if method exists
-    for (const c of node.getComponentsInChildren(Component) as unknown as any[]) {
-      const p = c as IPoolable;
-      p.onSpawn?.(data);
-    }
+    this.callPoolable(node, 'onSpawn', data);
     return node;
   }
 
   despawn(node: Node): void {
     if (!node || !node.isValid) return;
 
-    // cleanup
-    for (const c of node.getComponentsInChildren(Component) as unknown as any[]) {
-      const p = c as IPoolable;
-      p.onDespawn?.();
-    }
-
+    this.callPoolable(node, 'onDespawn');
     node.removeFromParent();
     node.active = false;
     this._items.push(node);
@@ -56,5 +49,16 @@ export class NodePool {
       }
     }
     this._items.length = 0;
+  }
+
+  private callPoolable(node: Node, method: 'onSpawn' | 'onDespawn', data?: any): void {
+    const comps = node.getComponentsInChildren(Component, true);
+    for (const c of comps) {
+      const p = c as unknown as IPoolable;
+      const fn = (p as any)[method];
+      if (typeof fn === 'function') {
+        try { fn.call(p, data); } catch {}
+      }
+    }
   }
 }

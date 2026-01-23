@@ -1,8 +1,8 @@
 import { Constructor } from './Types';
 
 /**
- * ServiceLocator: nhanh, gọn, đủ test/mocking.
- * Quy ước: register theo token (string/symbol/ctor) và resolve theo token.
+ * ServiceLocator: minimal and practical for small-to-mid projects.
+ * Convention: register by token (string/symbol/ctor) and resolve by token.
  */
 export type ServiceToken<T> = string | symbol | Constructor<T>;
 
@@ -30,7 +30,10 @@ export class ServiceLocator {
     return (this._services.get(token) as T) ?? null;
   }
 
-  /** For tests or full reset between scenes/apps */
+  /**
+ * ServiceLocator: minimal and practical for small-to-mid projects.
+ * Convention: register by token (string/symbol/ctor) and resolve by token.
+ */
   static reset(): void {
     this._services.clear();
   }

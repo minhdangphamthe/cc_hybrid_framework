@@ -1,17 +1,15 @@
-# cc_hybrid_framework
-A hybrid architecture that use Service Locator (hoặc Singleton) for game service, FSM (State Machine) in gameplay, and MVVM-lite for UI
+# Hybrid Framework v0.1.2 (Unity -> Cocos Creator 3.8.x)
 
-# Hybrid Framework v0.1 (Unity → Cocos Creator 3.8.x)
-
-Goal: a framework that is **lightweight but clean**, suitable for **hypercasual / casual / mid-core**, easy to reuse across many projects, and easy to port gameplay logic from Unity to Cocos.
+A lightweight but scalable hybrid architecture for **hypercasual / casual / mid-core** games.
+Designed to speed up porting from Unity to Cocos Creator (TypeScript) while keeping the codebase clean.
 
 ## Architecture
 - **Core (Infrastructure):** Service Locator + EventBus + Lifetime + FSM
-- **Gameplay (In-game):** FSM (AppFlow + InGame) + Object Pooling
-- **UI & Meta-game:** MVVM-lite + UI Router/Popup stack
+- **Gameplay (In-game):** AppFlow FSM + InGame FSM + Object Pooling
+- **UI & Meta:** MVVM-lite + simple UI Router
 
-## Services (available in v0.1)
-Required / scaffolded out of the box (each has a Noop implementation so the project can run immediately):
+## Services included (v0.1.2)
+Scaffolded with Noop implementations where platform SDKs are not wired yet:
 - `IAssetsService`
 - `IAudioService`
 - `IInputService`
@@ -21,21 +19,50 @@ Required / scaffolded out of the box (each has a Noop implementation so the proj
 - `IAnalyticsService`
 - `IPushNotificationService`
 - `ITimeService`
-
-### Suggested services to add later (depending on the game)
-- `IRemoteConfigService` (feature flags, balancing, A/B testing)
-- `ICrashReportingService` (crashes + non-fatal errors)
-- `IHapticsService` (vibration/haptics)
-- `IDeviceInfoService` (device model, OS, locale, safe-area, notch…)
-- `IPermissionsService` (tracking/notifications…)
-- `ILocalizationService` (i18n)
-- `ISceneService` (scene transitions + loading screen)
-- `ICommerceService` (higher-level IAP wrapper, receipts, restore)
+- `ISceneService` (multi-scene helper)
 
 ## Quick start
-1) Copy the folder `assets/scripts/framework` into your Cocos project.
-2) In the first scene, create a node named `Framework` and add the component `FrameworkBootstrap`.
-3) Implement real services by registering them, e.g. `ServiceLocator.register(Services.Ads, new MyAdsService())`…
+1) Copy `assets/scripts/framework` into your Cocos project.
+2) In your first scene, create a node named `Framework` and attach **FrameworkBootstrap**.
+3) Run. By default, FrameworkBootstrap:
+   - makes its node **persistent** (survives scene changes),
+   - registers services into **ServiceLocator**,
+   - auto-adds **AppController** (AppFlow FSM).
 
-See `assets/scripts/framework/example/ExampleGameFlow.ts` for a basic flow example.
+### Single-scene vs Multi-scene
+- Single-scene: keep everything in one scene and enable/disable feature root nodes via FSM.
+- Multi-scene: set `sceneMode = 'multi'` in FrameworkBootstrap and provide scene names.
 
+## Playbook (interactive HTML)
+Open `docs/playbook/index.html` in your browser.
+It includes navigation, search, a mode toggle, and copyable code examples.
+
+## Coding standard (project-wide)
+
+Formatting
+- Indentation: **2 spaces**, no tabs.
+- Quotes: **single quotes** for strings.
+- Semicolons: **required**.
+- Spacing:
+  - `if (cond) { ... }` (space after keywords, space before `{`)
+  - `{ a: 1, b: 2 }` (spaces inside object braces)
+  - `fn(a, b)` (space after commas)
+- Trailing commas: **recommended** for multi-line objects/arrays.
+
+Naming
+- Files:
+  - Components / Services: `PascalCase.ts` (e.g. `AppController.ts`).
+  - Interfaces: `IThing.ts` (e.g. `IAudioService.ts`).
+- Types/classes/enums: `PascalCase`.
+- Methods/functions/variables: `camelCase`.
+- Private fields: `private _likeThis` (leading underscore).
+- Public fields: no underscore.
+- Constants: `UPPER_SNAKE_CASE` (rare; prefer `const` at module scope when needed).
+
+Comments
+- English only.
+- Explain **why** (intent/constraints), not the obvious "what".
+
+
+## Notes
+See `assets/scripts/framework/NOTES.md` for caveats and future improvements.
