@@ -31,7 +31,7 @@ export class AppController extends Component {
   }
 
   onLoad(): void {
-    this._bus = ServiceLocator.resolve<EventBus<AppEvents>>('EventBus');
+    this._bus = ServiceLocator.resolve<EventBus<AppEvents>>(Services.EventBus);
     this._scene = ServiceLocator.tryResolve<ISceneService>(Services.Scene) as any;
     this._analytics = ServiceLocator.tryResolve<IAnalyticsService>(Services.Analytics);
 

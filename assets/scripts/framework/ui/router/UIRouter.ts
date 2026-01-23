@@ -1,5 +1,5 @@
 import { instantiate, Node, Prefab } from 'cc';
-import { Lifetime } from '../../core/Lifetime';
+import { UIView } from '../UIView';
 
 export interface IUIView {
   onShow?(): void;
@@ -13,8 +13,6 @@ export interface IUIView {
  */
 export class UIRouter {
   private _stack: Node[] = [];
-  private _life = new Lifetime();
-
   constructor(private _root: Node) {}
 
   get count(): number { return this._stack.length; }
@@ -25,7 +23,7 @@ export class UIRouter {
     node.active = true;
     this._stack.push(node);
 
-    const view = node.getComponent(Object as any) as any as IUIView;
+    const view = node.getComponent(UIView) as any as IUIView;
     view?.onShow?.();
     return node;
   }
@@ -33,7 +31,7 @@ export class UIRouter {
   pop(): void {
     const node = this._stack.pop();
     if (!node || !node.isValid) return;
-    const view = node.getComponent(Object as any) as any as IUIView;
+    const view = node.getComponent(UIView) as any as IUIView;
     view?.onHide?.();
     view?.onDestroyView?.();
     node.destroy();
@@ -45,6 +43,5 @@ export class UIRouter {
 
   dispose(): void {
     this.popAll();
-    this._life.dispose();
   }
 }

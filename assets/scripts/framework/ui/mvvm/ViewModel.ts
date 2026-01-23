@@ -1,10 +1,14 @@
 import { Lifetime } from '../../core/Lifetime';
 
-/** Base ViewModel with lifetime for subscriptions */
+/** Base ViewModel with a lifetime for subscriptions. */
 export class ViewModel {
-  readonly life = new Lifetime();
+  private _life = new Lifetime();
+
+  get life(): Lifetime {
+    return this._life;
+  }
 
   dispose(): void {
-    this.life.dispose();
+    this._life.dispose();
   }
 }

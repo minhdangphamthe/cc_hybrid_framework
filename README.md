@@ -66,3 +66,6 @@ Comments
 
 ## Notes
 See `assets/scripts/framework/NOTES.md` for caveats and future improvements.
+
+## UI Kit
+See `docs/uikit/README_UIKIT_EN.md`.

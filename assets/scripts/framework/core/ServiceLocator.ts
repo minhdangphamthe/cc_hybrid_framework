@@ -30,10 +30,6 @@ export class ServiceLocator {
     return (this._services.get(token) as T) ?? null;
   }
 
-  /**
- * ServiceLocator: minimal and practical for small-to-mid projects.
- * Convention: register by token (string/symbol/ctor) and resolve by token.
- */
   static reset(): void {
     this._services.clear();
   }

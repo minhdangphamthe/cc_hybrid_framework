@@ -13,7 +13,7 @@ export class NodePool {
   private _items: Node[] = [];
 
   constructor(private readonly _prefab: Prefab, private readonly _initialSize = 0) {
-    for (let i = 0; i < initialSize; i++) {
+    for (let i = 0; i < this._initialSize; i++) {
       this._items.push(this.create());
     }
   }

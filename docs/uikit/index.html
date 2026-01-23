@@ -1,0 +1,2219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Game UI Playbook - Mid-core / Casual / Hypercasual</title>
+  <link rel="stylesheet" href="playbook.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="side-head">
+        <div class="brand">
+          <span>Game UI Playbook</span>
+          <span class="pill">v0.2.0</span>
+        </div>
+        <div class="search">
+          <input id="q" placeholder="Search... (e.g. toast, popup, pooling, virtual list, leaderboard)" />
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <a href="#start" data-text="overview goals ui playbook"><strong>0) Getting started</strong><small>How to use this catalog</small></a>
+        <a href="#navigation-screen-flow" data-text="navigation &amp; screen flow screen / page (full-screen view) router (push/pop stack) scene transition controller tab bar / segmented control drawer / side menu bottom sheet (snap points) breadcrumb / stepper back handler / escape dispatcher deep link / shortcut entry"><strong>1) Navigation &amp; Screen Flow</strong><small>9 components</small></a>
+        <a href="#overlays-popup-modal-dialogs" data-text="overlays: popup / modal / dialogs modal popup (generic) alert dialog (1–2 cta) fullscreen modal (paywall / offer) reward reveal popup (chest/gacha) revive / continue popup permission popup (tracking/push) multi-step popup (wizard) tooltip / coachmark / spotlight context menu (long-press) popup queue manager"><strong>2) Overlays: Popup / Modal / Dialogs</strong><small>10 components</small></a>
+        <a href="#feedback-notification" data-text="feedback &amp; notification toast (auto-hide) snackbar (message + action) banner notice (top) badge / red-dot / counter global loading overlay progress hud (linear/circle) error sheet (network/server) confirmation tick (micro) haptics wrapper"><strong>3) Feedback &amp; Notification</strong><small>9 components</small></a>
+        <a href="#lists-virtualized-scrolling" data-text="lists &amp; virtualized scrolling scrollview (basic) recycle list / virtual list virtual grid (responsive) variable height list sticky header / section list table view (rows + columns) carousel / pager (snap) infinite scroll / pagination pull-to-refresh search + filter + sort bar"><strong>4) Lists &amp; Virtualized Scrolling</strong><small>10 components</small></a>
+        <a href="#core-ui-controls" data-text="core ui controls button (primary/secondary/icon/fab) toggle / checkbox / radio group slider (with value bubble) dropdown / select input field numeric stepper (+/-) chips / pills progress bar / radial fill countdown timer label number counter (count-up)"><strong>5) Core UI Controls</strong><small>10 components</small></a>
+        <a href="#economy-meta-progress" data-text="economy &amp; meta progress currency hud (coin/gem/energy) fly-to-wallet energy regen widget xp bar / level up battle pass track daily reward calendar quest/mission card offer timer tile loot table preview"><strong>6) Economy &amp; Meta Progress</strong><small>9 components</small></a>
+        <a href="#social-competitive" data-text="social / competitive leaderboard (global/friends) player card (avatar/frame) inbox / mailbox friend list / invite clan/guild panel chat bubble list match result summary"><strong>7) Social / Competitive</strong><small>7 components</small></a>
+        <a href="#monetization" data-text="monetization shop home item card (price/discount) bundle offer popup paywall iap restore / pending ui rewarded ads flow ui currency exchange panel"><strong>8) Monetization</strong><small>7 components</small></a>
+        <a href="#gameplay-hud-patterns" data-text="gameplay hud patterns hud bars (score/moves/timer) pause menu revive screen combo/streak widget floating text (damage/heal) objective tracker tutorial gesture hand mini-map / radar"><strong>9) Gameplay HUD Patterns</strong><small>8 components</small></a>
+        <a href="#visual-effects-utility" data-text="visual effects &amp; utility screen fade / wipe / iris punch / shake / bounce glow / pulse / breathing particle overlay (confetti) skeleton loading / shimmer highlight mask / spotlight fly-to-target vignette/blur overlay sound fx &amp; haptics hooks"><strong>10) Visual Effects &amp; Utility</strong><small>9 components</small></a>
+        <a href="#perf" data-text="performance checklist preload cache pooling virtualization"><strong>99) Performance checklist</strong><small>Cache / preload / pooling / scrolling</small></a>
+      </nav>
+    </aside>
+
+    <main class="main" id="main">
+      <section id="start">
+        <h1>Mid-core / Casual / Hypercasual UI Catalog</h1>
+        <p class="subtitle">
+          A reusable UI component catalog with built-in behavior guidance (visual feedback + VFX/animation + performance techniques).
+          Media in this playbook is <b>generated</b> (PNG + GIF) so you can ship and maintain it without licensing issues.
+        </p>
+
+        <div class="callout good">
+          <div class="title"><span class="dot"></span>How to use</div>
+          <div>
+            Use the left sidebar to jump to a category. Use <span class="inline-code">Search</span> to filter both the navigation and the cards.
+            Each component card includes: <b>Use</b>, <b>Visual feedback</b>, and <b>Tech notes</b> (cache/preload/pooling/virtualization).
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <h3>What this solves</h3>
+            <ul>
+              <li>Reusable popups, lists, scrolling panels, economy UI, and shop/leaderboard compositions.</li>
+              <li>Consistent motion language (press, enter/exit, micro-feedback).</li>
+              <li>Fast rendering: pooling, virtualization, diff update, asset preloading.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Recommended baseline behaviors</h3>
+            <ul>
+              <li>All overlays must be <b>queued</b> and <b>input-locked</b>.</li>
+              <li>All long lists must be <b>virtualized</b> (windowing + pooled cells).</li>
+              <li>All counters should be <b>event-driven</b>, not polled.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="navigation-screen-flow">
+        <h2>Navigation &amp; Screen Flow</h2>
+        <div class="grid grid-3">
+
+          <div class="card ui-card" data-text="navigation &amp; screen flow screen / page (full-screen view) home, gameplay, level select, settings, shop fade/slide in; parallax bg preload bundle per screen; cache prefab progress">
+            <h3>Screen / Page (Full-screen View)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Home, Gameplay, Level Select, Settings, Shop</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">fade/slide in; parallax bg</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">preload bundle per screen; cache prefab</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/navigation-screen-flow-screen-page-full-screen-view.png" alt="Screen / Page (Full-screen View) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/navigation-screen-flow-screen-page-full-screen-view.gif" alt="Screen / Page (Full-screen View) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="navigation &amp; screen flow router (push/pop stack) stack navigation slide transitions; input lock queue transitions; no overlap tabs">
+            <h3>Router (Push/Pop Stack)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Stack navigation</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">slide transitions; input lock</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">queue transitions; no overlap</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/navigation-screen-flow-router-push-pop-stack.png" alt="Router (Push/Pop Stack) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/navigation-screen-flow-router-push-pop-stack.gif" alt="Router (Push/Pop Stack) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="navigation &amp; screen flow scene transition controller scene switch + loading full-screen fade; loading bar async load; incremental activate progress">
+            <h3>Scene Transition Controller</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Scene switch + loading</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">full-screen fade; loading bar</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">async load; incremental activate</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/navigation-screen-flow-scene-transition-controller.png" alt="Scene Transition Controller screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/navigation-screen-flow-scene-transition-controller.gif" alt="Scene Transition Controller demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="navigation &amp; screen flow tab bar / segmented control switch tabs (shop/leaderboard) underline tween; badge pop keep-alive views; cache tabs">
+            <h3>Tab Bar / Segmented Control</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Switch tabs (shop/leaderboard)</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">underline tween; badge pop</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">keep-alive views; cache</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/navigation-screen-flow-tab-bar-segmented-control.png" alt="Tab Bar / Segmented Control screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/navigation-screen-flow-tab-bar-segmented-control.gif" alt="Tab Bar / Segmented Control demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="navigation &amp; screen flow drawer / side menu side menu slide + dim; spring lazy init; keep scroll state sheet">
+            <h3>Drawer / Side Menu</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Side menu</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">slide + dim; spring</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">lazy init; keep scroll state</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/navigation-screen-flow-drawer-side-menu.png" alt="Drawer / Side Menu screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/navigation-screen-flow-drawer-side-menu.gif" alt="Drawer / Side Menu demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="navigation &amp; screen flow bottom sheet (snap points) filters, quick actions drag close; overlay dim avoid layout rebuild per drag sheet">
+            <h3>Bottom Sheet (Snap Points)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Filters, quick actions</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">drag close; overlay dim</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">avoid layout rebuild per drag</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/navigation-screen-flow-bottom-sheet-snap-points.png" alt="Bottom Sheet (Snap Points) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/navigation-screen-flow-bottom-sheet-snap-points.gif" alt="Bottom Sheet (Snap Points) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="navigation &amp; screen flow breadcrumb / stepper multi-step flows highlight step; check pop diff updates only badge">
+            <h3>Breadcrumb / Stepper</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Multi-step flows</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">highlight step; check pop</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">diff updates only</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/navigation-screen-flow-breadcrumb-stepper.png" alt="Breadcrumb / Stepper screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/navigation-screen-flow-breadcrumb-stepper.gif" alt="Breadcrumb / Stepper demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="navigation &amp; screen flow back handler / escape dispatcher android back / esc none priority stack: popup&gt;drawer&gt;screen badge">
+            <h3>Back Handler / Escape Dispatcher</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Android back / ESC</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">none</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">priority stack: popup&gt;drawer&gt;screen</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/navigation-screen-flow-back-handler-escape-dispatcher.png" alt="Back Handler / Escape Dispatcher screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/navigation-screen-flow-back-handler-escape-dispatcher.gif" alt="Back Handler / Escape Dispatcher demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="navigation &amp; screen flow deep link / shortcut entry open directly to feature hero transition prefetch data; skeleton fallback skeleton">
+            <h3>Deep Link / Shortcut Entry</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Open directly to feature</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">hero transition</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">prefetch data; skeleton fallback</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/navigation-screen-flow-deep-link-shortcut-entry.png" alt="Deep Link / Shortcut Entry screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/navigation-screen-flow-deep-link-shortcut-entry.gif" alt="Deep Link / Shortcut Entry demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="overlays-popup-modal-dialogs">
+        <h2>Overlays: Popup / Modal / Dialogs</h2>
+        <div class="grid grid-3">
+
+          <div class="card ui-card" data-text="overlays: popup / modal / dialogs modal popup (generic) confirm / info scale+fade; dim pool + queue; lock input modal">
+            <h3>Modal Popup (Generic)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Confirm / info</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">scale+fade; dim</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">pool + queue; lock input</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/overlays-popup-modal-dialogs-modal-popup-generic.png" alt="Modal Popup (Generic) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/overlays-popup-modal-dialogs-modal-popup-generic.gif" alt="Modal Popup (Generic) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="overlays: popup / modal / dialogs alert dialog (1–2 cta) retry/quit small shake on invalid reuse prefab modal">
+            <h3>Alert Dialog (1–2 CTA)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Retry/Quit</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">small shake on invalid</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">reuse prefab</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/overlays-popup-modal-dialogs-alert-dialog-1-2-cta.png" alt="Alert Dialog (1–2 CTA) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/overlays-popup-modal-dialogs-alert-dialog-1-2-cta.gif" alt="Alert Dialog (1–2 CTA) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="overlays: popup / modal / dialogs fullscreen modal (paywall / offer) iap / subscription spotlight; cta pulse preload images; shared timer confetti">
+            <h3>Fullscreen Modal (Paywall / Offer)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">IAP / subscription</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">spotlight; CTA pulse</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">preload images; shared timer</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/overlays-popup-modal-dialogs-fullscreen-modal-paywall-offer.png" alt="Fullscreen Modal (Paywall / Offer) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/overlays-popup-modal-dialogs-fullscreen-modal-paywall-offer.gif" alt="Fullscreen Modal (Paywall / Offer) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="overlays: popup / modal / dialogs reward reveal popup (chest/gacha) claim / gacha burst particles; rarity glow fx pooling; cap particles confetti">
+            <h3>Reward Reveal Popup (Chest/Gacha)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Claim / gacha</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">burst particles; rarity glow</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">FX pooling; cap particles</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/overlays-popup-modal-dialogs-reward-reveal-popup-chest-gacha.png" alt="Reward Reveal Popup (Chest/Gacha) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/overlays-popup-modal-dialogs-reward-reveal-popup-chest-gacha.gif" alt="Reward Reveal Popup (Chest/Gacha) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="overlays: popup / modal / dialogs revive / continue popup hypercasual loop countdown ring; button pulse tick text 0.1–0.2s progress">
+            <h3>Revive / Continue Popup</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Hypercasual loop</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">countdown ring; button pulse</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">tick text 0.1–0.2s</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/overlays-popup-modal-dialogs-revive-continue-popup.png" alt="Revive / Continue Popup screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/overlays-popup-modal-dialogs-revive-continue-popup.gif" alt="Revive / Continue Popup demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="overlays: popup / modal / dialogs permission popup (tracking/push) pre-education benefit highlight static content; light anim modal">
+            <h3>Permission Popup (Tracking/Push)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Pre-education</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">benefit highlight</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">static content; light anim</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/overlays-popup-modal-dialogs-permission-popup-tracking-push.png" alt="Permission Popup (Tracking/Push) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/overlays-popup-modal-dialogs-permission-popup-tracking-push.gif" alt="Permission Popup (Tracking/Push) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="overlays: popup / modal / dialogs multi-step popup (wizard) onboarding slide pages; dots lazy load steps tabs">
+            <h3>Multi-step Popup (Wizard)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Onboarding</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">slide pages; dots</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">lazy load steps</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/overlays-popup-modal-dialogs-multi-step-popup-wizard.png" alt="Multi-step Popup (Wizard) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/overlays-popup-modal-dialogs-multi-step-popup-wizard.gif" alt="Multi-step Popup (Wizard) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="overlays: popup / modal / dialogs tooltip / coachmark / spotlight guide feature pulse ring; mask spotlight cheap mask; anchor follow badge">
+            <h3>Tooltip / Coachmark / Spotlight</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Guide feature</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">pulse ring; mask spotlight</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">cheap mask; anchor follow</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/overlays-popup-modal-dialogs-tooltip-coachmark-spotlight.png" alt="Tooltip / Coachmark / Spotlight screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/overlays-popup-modal-dialogs-tooltip-coachmark-spotlight.gif" alt="Tooltip / Coachmark / Spotlight demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="overlays: popup / modal / dialogs context menu (long-press) item actions scale from anchor reuse entries sheet">
+            <h3>Context Menu (Long-press)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Item actions</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">scale from anchor</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">reuse entries</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/overlays-popup-modal-dialogs-context-menu-long-press.png" alt="Context Menu (Long-press) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/overlays-popup-modal-dialogs-context-menu-long-press.gif" alt="Context Menu (Long-press) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="overlays: popup / modal / dialogs popup queue manager chain popups consistent transitions dedupe policy; priority modal">
+            <h3>Popup Queue Manager</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Chain popups</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">consistent transitions</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">dedupe policy; priority</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/overlays-popup-modal-dialogs-popup-queue-manager.png" alt="Popup Queue Manager screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/overlays-popup-modal-dialogs-popup-queue-manager.gif" alt="Popup Queue Manager demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="feedback-notification">
+        <h2>Feedback &amp; Notification</h2>
+        <div class="grid grid-3">
+
+          <div class="card ui-card" data-text="feedback &amp; notification toast (auto-hide) short messages slide+fade; punch queue + reuse toast">
+            <h3>Toast (Auto-hide)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Short messages</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">slide+fade; punch</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">queue + reuse</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/feedback-notification-toast-auto-hide.png" alt="Toast (Auto-hide) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/feedback-notification-toast-auto-hide.gif" alt="Toast (Auto-hide) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="feedback &amp; notification snackbar (message + action) retry actions reveal bottom debounce actions toast">
+            <h3>Snackbar (Message + Action)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Retry actions</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">reveal bottom</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">debounce actions</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/feedback-notification-snackbar-message-action.png" alt="Snackbar (Message + Action) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/feedback-notification-snackbar-message-action.gif" alt="Snackbar (Message + Action) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="feedback &amp; notification banner notice (top) event/maintenance slide down; bounce event-driven updates toast">
+            <h3>Banner Notice (Top)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Event/maintenance</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">slide down; bounce</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">event-driven updates</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/feedback-notification-banner-notice-top.png" alt="Banner Notice (Top) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/feedback-notification-banner-notice-top.gif" alt="Banner Notice (Top) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="feedback &amp; notification badge / red-dot / counter unread/quest ready pop; ping loop reactive binding; no polling badge">
+            <h3>Badge / Red-dot / Counter</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Unread/quest ready</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">pop; ping loop</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">reactive binding; no polling</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/feedback-notification-badge-red-dot-counter.png" alt="Badge / Red-dot / Counter screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/feedback-notification-badge-red-dot-counter.gif" alt="Badge / Red-dot / Counter demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="feedback &amp; notification global loading overlay network/scene load spinner + tips min show time; cancel-safe progress">
+            <h3>Global Loading Overlay</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Network/scene load</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">spinner + tips</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">min show time; cancel-safe</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/feedback-notification-global-loading-overlay.png" alt="Global Loading Overlay screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/feedback-notification-global-loading-overlay.gif" alt="Global Loading Overlay demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="feedback &amp; notification progress hud (linear/circle) download/upgrade smooth lerp; glow at 100% throttle label progress">
+            <h3>Progress HUD (Linear/Circle)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Download/upgrade</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">smooth lerp; glow at 100%</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">throttle label</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/feedback-notification-progress-hud-linear-circle.png" alt="Progress HUD (Linear/Circle) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/feedback-notification-progress-hud-linear-circle.gif" alt="Progress HUD (Linear/Circle) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="feedback &amp; notification error sheet (network/server) offline/timeouts icon shake centralized mapping sheet">
+            <h3>Error Sheet (Network/Server)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Offline/timeouts</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">icon shake</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">centralized mapping</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/feedback-notification-error-sheet-network-server.png" alt="Error Sheet (Network/Server) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/feedback-notification-error-sheet-network-server.gif" alt="Error Sheet (Network/Server) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="feedback &amp; notification confirmation tick (micro) saved/claimed tick draw + sparkle pooled micro-fx badge">
+            <h3>Confirmation Tick (Micro)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Saved/claimed</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">tick draw + sparkle</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">pooled micro-FX</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/feedback-notification-confirmation-tick-micro.png" alt="Confirmation Tick (Micro) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/feedback-notification-confirmation-tick-micro.gif" alt="Confirmation Tick (Micro) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="feedback &amp; notification haptics wrapper mobile feedback none cooldown avoid spam badge">
+            <h3>Haptics Wrapper</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Mobile feedback</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">none</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">cooldown avoid spam</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/feedback-notification-haptics-wrapper.png" alt="Haptics Wrapper screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/feedback-notification-haptics-wrapper.gif" alt="Haptics Wrapper demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="lists-virtualized-scrolling">
+        <h2>Lists &amp; Virtualized Scrolling</h2>
+        <div class="grid grid-3">
+
+          <div class="card ui-card" data-text="lists &amp; virtualized scrolling scrollview (basic) small lists overscroll elastic pool cells if &gt;30 list">
+            <h3>ScrollView (basic)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Small lists</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">overscroll elastic</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">pool cells if &gt;30</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/lists-virtualized-scrolling-scrollview-basic.png" alt="ScrollView (basic) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/lists-virtualized-scrolling-scrollview-basic.gif" alt="ScrollView (basic) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="lists &amp; virtualized scrolling recycle list / virtual list long lists subtle fade on appear windowing + reuse cells list">
+            <h3>Recycle List / Virtual List</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Long lists</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">subtle fade on appear</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">windowing + reuse cells</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/lists-virtualized-scrolling-recycle-list-virtual-list.png" alt="Recycle List / Virtual List screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/lists-virtualized-scrolling-recycle-list-virtual-list.gif" alt="Recycle List / Virtual List demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="lists &amp; virtualized scrolling virtual grid (responsive) inventory/skins grid stagger appear visible indices + reuse list">
+            <h3>Virtual Grid (Responsive)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Inventory/skins grid</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">stagger appear</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">visible indices + reuse</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/lists-virtualized-scrolling-virtual-grid-responsive.png" alt="Virtual Grid (Responsive) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/lists-virtualized-scrolling-virtual-grid-responsive.gif" alt="Virtual Grid (Responsive) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="lists &amp; virtualized scrolling variable height list chat/mail none height cache + incremental measure list">
+            <h3>Variable Height List</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Chat/mail</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">none</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">height cache + incremental measure</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/lists-virtualized-scrolling-variable-height-list.png" alt="Variable Height List screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/lists-virtualized-scrolling-variable-height-list.gif" alt="Variable Height List demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="lists &amp; virtualized scrolling sticky header / section list grouped lists header pin section offsets cache list">
+            <h3>Sticky Header / Section List</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Grouped lists</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">header pin</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">section offsets cache</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/lists-virtualized-scrolling-sticky-header-section-list.png" alt="Sticky Header / Section List screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/lists-virtualized-scrolling-sticky-header-section-list.gif" alt="Sticky Header / Section List demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="lists &amp; virtualized scrolling table view (rows + columns) stats matrix sort arrow tween recycle rows list">
+            <h3>Table View (Rows + Columns)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Stats matrix</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">sort arrow tween</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">recycle rows</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/lists-virtualized-scrolling-table-view-rows-columns.png" alt="Table View (Rows + Columns) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/lists-virtualized-scrolling-table-view-rows-columns.gif" alt="Table View (Rows + Columns) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="lists &amp; virtualized scrolling carousel / pager (snap) tutorial/offer cards center scale + parallax preload neighbors only tabs">
+            <h3>Carousel / Pager (snap)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Tutorial/offer cards</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">center scale + parallax</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">preload neighbors only</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/lists-virtualized-scrolling-carousel-pager-snap.png" alt="Carousel / Pager (snap) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/lists-virtualized-scrolling-carousel-pager-snap.gif" alt="Carousel / Pager (snap) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="lists &amp; virtualized scrolling infinite scroll / pagination feed/leaderboard footer spinner batch requests; cancel stale list">
+            <h3>Infinite Scroll / Pagination</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Feed/leaderboard</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">footer spinner</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">batch requests; cancel stale</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/lists-virtualized-scrolling-infinite-scroll-pagination.png" alt="Infinite Scroll / Pagination screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/lists-virtualized-scrolling-infinite-scroll-pagination.gif" alt="Infinite Scroll / Pagination demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="lists &amp; virtualized scrolling pull-to-refresh refresh list pull indicator cooldown list">
+            <h3>Pull-to-Refresh</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Refresh list</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">pull indicator</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">cooldown</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/lists-virtualized-scrolling-pull-to-refresh.png" alt="Pull-to-Refresh screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/lists-virtualized-scrolling-pull-to-refresh.gif" alt="Pull-to-Refresh demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="lists &amp; virtualized scrolling search + filter + sort bar inventory/shop chip select debounce input; diff update tabs">
+            <h3>Search + Filter + Sort Bar</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Inventory/shop</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">chip select</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">debounce input; diff update</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/lists-virtualized-scrolling-search-filter-sort-bar.png" alt="Search + Filter + Sort Bar screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/lists-virtualized-scrolling-search-filter-sort-bar.gif" alt="Search + Filter + Sort Bar demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="core-ui-controls">
+        <h2>Core UI Controls</h2>
+        <div class="grid grid-3">
+
+          <div class="card ui-card" data-text="core ui controls button (primary/secondary/icon/fab) cta press scale; ripple click throttle; audio hook badge">
+            <h3>Button (Primary/Secondary/Icon/FAB)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">CTA</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">press scale; ripple</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">click throttle; audio hook</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/core-ui-controls-button-primary-secondary-icon-fab.png" alt="Button (Primary/Secondary/Icon/FAB) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/core-ui-controls-button-primary-secondary-icon-fab.gif" alt="Button (Primary/Secondary/Icon/FAB) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="core ui controls toggle / checkbox / radio group settings/filters knob slide; check pop central group state badge">
+            <h3>Toggle / Checkbox / Radio Group</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Settings/filters</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">knob slide; check pop</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">central group state</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/core-ui-controls-toggle-checkbox-radio-group.png" alt="Toggle / Checkbox / Radio Group screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/core-ui-controls-toggle-checkbox-radio-group.gif" alt="Toggle / Checkbox / Radio Group demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="core ui controls slider (with value bubble) volume/sensitivity bubble scale in/out throttle callbacks progress">
+            <h3>Slider (with value bubble)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Volume/sensitivity</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">bubble scale in/out</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">throttle callbacks</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/core-ui-controls-slider-with-value-bubble.png" alt="Slider (with value bubble) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/core-ui-controls-slider-with-value-bubble.gif" alt="Slider (with value bubble) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="core ui controls dropdown / select sorting/language expand + fade virtualize long options sheet">
+            <h3>Dropdown / Select</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Sorting/language</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">expand + fade</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">virtualize long options</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/core-ui-controls-dropdown-select.png" alt="Dropdown / Select screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/core-ui-controls-dropdown-select.gif" alt="Dropdown / Select demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="core ui controls input field rename/redeem invalid shake cheap validation modal">
+            <h3>Input Field</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Rename/redeem</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">invalid shake</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">cheap validation</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/core-ui-controls-input-field.png" alt="Input Field screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/core-ui-controls-input-field.gif" alt="Input Field demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="core ui controls numeric stepper (+/-) buy quantity press repeat clamp min/max badge">
+            <h3>Numeric Stepper (+/-)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Buy quantity</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">press repeat</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">clamp min/max</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/core-ui-controls-numeric-stepper.png" alt="Numeric Stepper (+/-) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/core-ui-controls-numeric-stepper.gif" alt="Numeric Stepper (+/-) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="core ui controls chips / pills tag filters highlight pill slide pool chips tabs">
+            <h3>Chips / Pills</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Tag filters</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">highlight pill slide</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">pool chips</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/core-ui-controls-chips-pills.png" alt="Chips / Pills screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/core-ui-controls-chips-pills.gif" alt="Chips / Pills demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="core ui controls progress bar / radial fill loading/xp ease fill tick updates progress">
+            <h3>Progress Bar / Radial Fill</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Loading/XP</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">ease fill</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">tick updates</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/core-ui-controls-progress-bar-radial-fill.png" alt="Progress Bar / Radial Fill screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/core-ui-controls-progress-bar-radial-fill.gif" alt="Progress Bar / Radial Fill demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="core ui controls countdown timer label offers/timers pulse near 0 update 1/sec progress">
+            <h3>Countdown Timer Label</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Offers/timers</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">pulse near 0</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">update 1/sec</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/core-ui-controls-countdown-timer-label.png" alt="Countdown Timer Label screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/core-ui-controls-countdown-timer-label.gif" alt="Countdown Timer Label demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="core ui controls number counter (count-up) score/currency pop + tick sound lerp value; cap updates fly">
+            <h3>Number Counter (Count-up)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Score/currency</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">pop + tick sound</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">lerp value; cap updates</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/core-ui-controls-number-counter-count-up.png" alt="Number Counter (Count-up) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/core-ui-controls-number-counter-count-up.gif" alt="Number Counter (Count-up) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="economy-meta-progress">
+        <h2>Economy &amp; Meta Progress</h2>
+        <div class="grid grid-3">
+
+          <div class="card ui-card" data-text="economy &amp; meta progress currency hud (coin/gem/energy) top bar count-up; icon bounce event-driven updates fly">
+            <h3>Currency HUD (Coin/Gem/Energy)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Top bar</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">count-up; icon bounce</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">event-driven updates</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/economy-meta-progress-currency-hud-coin-gem-energy.png" alt="Currency HUD (Coin/Gem/Energy) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/economy-meta-progress-currency-hud-coin-gem-energy.gif" alt="Currency HUD (Coin/Gem/Energy) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="economy &amp; meta progress fly-to-wallet reward feel bezier trail fx pooling; cap icons fly">
+            <h3>Fly-to-Wallet</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Reward feel</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">bezier trail</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">FX pooling; cap icons</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/economy-meta-progress-fly-to-wallet.png" alt="Fly-to-Wallet screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/economy-meta-progress-fly-to-wallet.gif" alt="Fly-to-Wallet demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="economy &amp; meta progress energy regen widget lives/energy pulse when full tick 1s; persist timestamp progress">
+            <h3>Energy Regen Widget</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Lives/energy</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">pulse when full</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">tick 1s; persist timestamp</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/economy-meta-progress-energy-regen-widget.png" alt="Energy Regen Widget screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/economy-meta-progress-energy-regen-widget.gif" alt="Energy Regen Widget demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="economy &amp; meta progress xp bar / level up player level multi-level fill; confetti chunk animation confetti">
+            <h3>XP Bar / Level Up</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Player level</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">multi-level fill; confetti</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">chunk animation</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/economy-meta-progress-xp-bar-level-up.png" alt="XP Bar / Level Up screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/economy-meta-progress-xp-bar-level-up.gif" alt="XP Bar / Level Up demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="economy &amp; meta progress battle pass track milestone rewards claim glow virtualize milestones list">
+            <h3>Battle Pass Track</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Milestone rewards</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">claim glow</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">virtualize milestones</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/economy-meta-progress-battle-pass-track.png" alt="Battle Pass Track screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/economy-meta-progress-battle-pass-track.gif" alt="Battle Pass Track demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="economy &amp; meta progress daily reward calendar retention stamp claimed pool day cells confetti">
+            <h3>Daily Reward Calendar</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Retention</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">stamp claimed</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">pool day cells</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/economy-meta-progress-daily-reward-calendar.png" alt="Daily Reward Calendar screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/economy-meta-progress-daily-reward-calendar.gif" alt="Daily Reward Calendar demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="economy &amp; meta progress quest/mission card daily/weekly tasks progress tick; claim burst diff update progress">
+            <h3>Quest/Mission Card</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Daily/weekly tasks</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">progress tick; claim burst</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">diff update</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/economy-meta-progress-quest-mission-card.png" alt="Quest/Mission Card screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/economy-meta-progress-quest-mission-card.gif" alt="Quest/Mission Card demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="economy &amp; meta progress offer timer tile limited-time urgency pulse shared timer service progress">
+            <h3>Offer Timer Tile</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Limited-time</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">urgency pulse</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">shared timer service</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/economy-meta-progress-offer-timer-tile.png" alt="Offer Timer Tile screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/economy-meta-progress-offer-timer-tile.gif" alt="Offer Timer Tile demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="economy &amp; meta progress loot table preview drop preview rarity highlight lazy render list">
+            <h3>Loot Table Preview</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Drop preview</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">rarity highlight</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">lazy render</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/economy-meta-progress-loot-table-preview.png" alt="Loot Table Preview screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/economy-meta-progress-loot-table-preview.gif" alt="Loot Table Preview demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="social-competitive">
+        <h2>Social / Competitive</h2>
+        <div class="grid grid-3">
+
+          <div class="card ui-card" data-text="social / competitive leaderboard (global/friends) ranking highlight self row virtual list + pinned self leaderboard">
+            <h3>Leaderboard (Global/Friends)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Ranking</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">highlight self row</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">virtual list + pinned self</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/social-competitive-leaderboard-global-friends.png" alt="Leaderboard (Global/Friends) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/social-competitive-leaderboard-global-friends.gif" alt="Leaderboard (Global/Friends) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="social / competitive player card (avatar/frame) profile summary rarity glow icon lru cache badge">
+            <h3>Player Card (Avatar/Frame)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Profile summary</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">rarity glow</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">icon LRU cache</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/social-competitive-player-card-avatar-frame.png" alt="Player Card (Avatar/Frame) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/social-competitive-player-card-avatar-frame.gif" alt="Player Card (Avatar/Frame) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="social / competitive inbox / mailbox claim gifts claim-all burst batch requests; virtual list list">
+            <h3>Inbox / Mailbox</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Claim gifts</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">claim-all burst</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">batch requests; virtual list</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/social-competitive-inbox-mailbox.png" alt="Inbox / Mailbox screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/social-competitive-inbox-mailbox.gif" alt="Inbox / Mailbox demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="social / competitive friend list / invite social loop invite sent tick debounce search; pagination list">
+            <h3>Friend List / Invite</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Social loop</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">invite sent tick</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">debounce search; pagination</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/social-competitive-friend-list-invite.png" alt="Friend List / Invite screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/social-competitive-friend-list-invite.gif" alt="Friend List / Invite demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="social / competitive clan/guild panel mid-core social role badge diff update + cache list">
+            <h3>Clan/Guild Panel</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Mid-core social</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">role badge</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">diff update + cache</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/social-competitive-clan-guild-panel.png" alt="Clan/Guild Panel screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/social-competitive-clan-guild-panel.gif" alt="Clan/Guild Panel demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="social / competitive chat bubble list chat ui new message slide variable height cache list">
+            <h3>Chat Bubble List</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Chat UI</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">new message slide</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">variable height cache</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/social-competitive-chat-bubble-list.png" alt="Chat Bubble List screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/social-competitive-chat-bubble-list.gif" alt="Chat Bubble List demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="social / competitive match result summary pvp stats reveal sequential static layout confetti">
+            <h3>Match Result Summary</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">PvP stats</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">reveal sequential</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">static layout</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/social-competitive-match-result-summary.png" alt="Match Result Summary screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/social-competitive-match-result-summary.gif" alt="Match Result Summary demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="monetization">
+        <h2>Monetization</h2>
+        <div class="grid grid-3">
+
+          <div class="card ui-card" data-text="monetization shop home categories + featured featured carousel; cta pulse preload featured; lazy tabs tabs">
+            <h3>Shop Home</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Categories + featured</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">featured carousel; CTA pulse</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">preload featured; lazy tabs</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/monetization-shop-home.png" alt="Shop Home screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/monetization-shop-home.gif" alt="Shop Home demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="monetization item card (price/discount) shop items sale badge pop recycle cards badge">
+            <h3>Item Card (price/discount)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Shop items</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">sale badge pop</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">recycle cards</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/monetization-item-card-price-discount.png" alt="Item Card (price/discount) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/monetization-item-card-price-discount.gif" alt="Item Card (price/discount) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="monetization bundle offer popup limited deal value highlight; glow shared timer; atlas modal">
+            <h3>Bundle Offer Popup</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Limited deal</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">value highlight; glow</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">shared timer; atlas</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/monetization-bundle-offer-popup.png" alt="Bundle Offer Popup screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/monetization-bundle-offer-popup.gif" alt="Bundle Offer Popup demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="monetization paywall subscription / starter pack benefit shimmer avoid heavy mask confetti">
+            <h3>Paywall</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Subscription / starter pack</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">benefit shimmer</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">avoid heavy mask</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/monetization-paywall.png" alt="Paywall screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/monetization-paywall.gif" alt="Paywall demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="monetization iap restore / pending ui restore purchases spinner + status state-machine ui; cancel-safe progress">
+            <h3>IAP Restore / Pending UI</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Restore purchases</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">spinner + status</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">state-machine UI; cancel-safe</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/monetization-iap-restore-pending-ui.png" alt="IAP Restore / Pending UI screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/monetization-iap-restore-pending-ui.gif" alt="IAP Restore / Pending UI demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="monetization rewarded ads flow ui watch ad → reward progress + reveal fail paths + cooldown progress">
+            <h3>Rewarded Ads Flow UI</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Watch ad → reward</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">progress + reveal</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">fail paths + cooldown</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/monetization-rewarded-ads-flow-ui.png" alt="Rewarded Ads Flow UI screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/monetization-rewarded-ads-flow-ui.gif" alt="Rewarded Ads Flow UI demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="monetization currency exchange panel convert currency preview tick compute on change fly">
+            <h3>Currency Exchange Panel</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Convert currency</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">preview tick</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">compute on change</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/monetization-currency-exchange-panel.png" alt="Currency Exchange Panel screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/monetization-currency-exchange-panel.gif" alt="Currency Exchange Panel demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="gameplay-hud-patterns">
+        <h2>Gameplay HUD Patterns</h2>
+        <div class="grid grid-3">
+
+          <div class="card ui-card" data-text="gameplay hud patterns hud bars (score/moves/timer) core hud score pop; timer pulse throttle updates fly">
+            <h3>HUD Bars (Score/Moves/Timer)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Core HUD</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">score pop; timer pulse</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">throttle updates</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/gameplay-hud-patterns-hud-bars-score-moves-timer.png" alt="HUD Bars (Score/Moves/Timer) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/gameplay-hud-patterns-hud-bars-score-moves-timer.gif" alt="HUD Bars (Score/Moves/Timer) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="gameplay hud patterns pause menu pause/resume blur/dim; slide freeze gameplay tick modal">
+            <h3>Pause Menu</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Pause/resume</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">blur/dim; slide</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">freeze gameplay tick</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/gameplay-hud-patterns-pause-menu.png" alt="Pause Menu screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/gameplay-hud-patterns-pause-menu.gif" alt="Pause Menu demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="gameplay hud patterns revive screen continue countdown ring cheap ring fill progress">
+            <h3>Revive Screen</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Continue</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">countdown ring</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">cheap ring fill</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/gameplay-hud-patterns-revive-screen.png" alt="Revive Screen screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/gameplay-hud-patterns-revive-screen.gif" alt="Revive Screen demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="gameplay hud patterns combo/streak widget feel-good feedback punch + trail pool text popups badge">
+            <h3>Combo/Streak Widget</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Feel-good feedback</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">punch + trail</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">pool text popups</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/gameplay-hud-patterns-combo-streak-widget.png" alt="Combo/Streak Widget screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/gameplay-hud-patterns-combo-streak-widget.gif" alt="Combo/Streak Widget demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="gameplay hud patterns floating text (damage/heal) mid-core combat float + fade pool; cap concurrent toast">
+            <h3>Floating Text (Damage/Heal)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Mid-core combat</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">float + fade</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">pool; cap concurrent</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/gameplay-hud-patterns-floating-text-damage-heal.png" alt="Floating Text (Damage/Heal) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/gameplay-hud-patterns-floating-text-damage-heal.gif" alt="Floating Text (Damage/Heal) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="gameplay hud patterns objective tracker goals checkmark pop diff update badge">
+            <h3>Objective Tracker</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Goals</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">checkmark pop</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">diff update</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/gameplay-hud-patterns-objective-tracker.png" alt="Objective Tracker screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/gameplay-hud-patterns-objective-tracker.gif" alt="Objective Tracker demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="gameplay hud patterns tutorial gesture hand guide swipe/tap loop tween disable when hidden tabs">
+            <h3>Tutorial Gesture Hand</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Guide swipe/tap</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">loop tween</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">disable when hidden</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/gameplay-hud-patterns-tutorial-gesture-hand.png" alt="Tutorial Gesture Hand screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/gameplay-hud-patterns-tutorial-gesture-hand.gif" alt="Tutorial Gesture Hand demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="gameplay hud patterns mini-map / radar mid-core ping blip low rate update badge">
+            <h3>Mini-map / Radar</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Mid-core</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">ping blip</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">low rate update</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/gameplay-hud-patterns-mini-map-radar.png" alt="Mini-map / Radar screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/gameplay-hud-patterns-mini-map-radar.gif" alt="Mini-map / Radar demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="visual-effects-utility">
+        <h2>Visual Effects &amp; Utility</h2>
+        <div class="grid grid-3">
+
+          <div class="card ui-card" data-text="visual effects &amp; utility screen fade / wipe / iris transitions fade/wipe reuse overlay progress">
+            <h3>Screen Fade / Wipe / Iris</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Transitions</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">fade/wipe</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">reuse overlay</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/visual-effects-utility-screen-fade-wipe-iris.png" alt="Screen Fade / Wipe / Iris screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/visual-effects-utility-screen-fade-wipe-iris.gif" alt="Screen Fade / Wipe / Iris demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="visual effects &amp; utility punch / shake / bounce invalid/hit/reward shake clamp intensity modal">
+            <h3>Punch / Shake / Bounce</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Invalid/hit/reward</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">shake</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">clamp intensity</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/visual-effects-utility-punch-shake-bounce.png" alt="Punch / Shake / Bounce screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/visual-effects-utility-punch-shake-bounce.gif" alt="Punch / Shake / Bounce demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="visual effects &amp; utility glow / pulse / breathing cta highlight pulse tween opacity/scale badge">
+            <h3>Glow / Pulse / Breathing</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">CTA highlight</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">pulse</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">tween opacity/scale</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/visual-effects-utility-glow-pulse-breathing.png" alt="Glow / Pulse / Breathing screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/visual-effects-utility-glow-pulse-breathing.gif" alt="Glow / Pulse / Breathing demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="visual effects &amp; utility particle overlay (confetti) win/reward confetti burst cap emission; pool confetti">
+            <h3>Particle Overlay (Confetti)</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Win/reward</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">confetti burst</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">cap emission; pool</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/visual-effects-utility-particle-overlay-confetti.png" alt="Particle Overlay (Confetti) screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/visual-effects-utility-particle-overlay-confetti.gif" alt="Particle Overlay (Confetti) demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="visual effects &amp; utility skeleton loading / shimmer loading lists shimmer stop when data ready skeleton">
+            <h3>Skeleton Loading / Shimmer</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Loading lists</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">shimmer</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">stop when data ready</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/visual-effects-utility-skeleton-loading-shimmer.png" alt="Skeleton Loading / Shimmer screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/visual-effects-utility-skeleton-loading-shimmer.gif" alt="Skeleton Loading / Shimmer demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="visual effects &amp; utility highlight mask / spotlight tutorial mask spotlight avoid heavy stencil badge">
+            <h3>Highlight Mask / Spotlight</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Tutorial</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">mask spotlight</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">avoid heavy stencil</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/visual-effects-utility-highlight-mask-spotlight.png" alt="Highlight Mask / Spotlight screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/visual-effects-utility-highlight-mask-spotlight.gif" alt="Highlight Mask / Spotlight demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="visual effects &amp; utility fly-to-target coin to wallet trail batch + merge fly">
+            <h3>Fly-to-Target</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Coin to wallet</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">trail</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">batch + merge</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/visual-effects-utility-fly-to-target.png" alt="Fly-to-Target screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/visual-effects-utility-fly-to-target.gif" alt="Fly-to-Target demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="visual effects &amp; utility vignette/blur overlay pause modal feel fake blur avoid real-time blur modal">
+            <h3>Vignette/Blur Overlay</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Pause modal feel</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">fake blur</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">avoid real-time blur</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/visual-effects-utility-vignette-blur-overlay.png" alt="Vignette/Blur Overlay screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/visual-effects-utility-vignette-blur-overlay.gif" alt="Vignette/Blur Overlay demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <div class="card ui-card" data-text="visual effects &amp; utility sound fx &amp; haptics hooks interaction feel click tick central dispatcher badge">
+            <h3>Sound FX &amp; Haptics Hooks</h3>
+            <div class="meta">
+              <span class="tag good">Use</span><span class="muted">Interaction feel</span>
+            </div>
+            <div class="meta">
+              <span class="tag warn">Visual</span><span class="muted">click tick</span>
+            </div>
+            <div class="meta">
+              <span class="tag">Tech</span><span class="muted">central dispatcher</span>
+            </div>
+            <div class="media">
+              <figure>
+                <img class="shot" src="assets/img/visual-effects-utility-sound-fx-haptics-hooks.png" alt="Sound FX &amp; Haptics Hooks screenshot"/>
+                <figcaption>Illustration</figcaption>
+              </figure>
+              <figure>
+                <img class="shot" src="assets/gif/visual-effects-utility-sound-fx-haptics-hooks.gif" alt="Sound FX &amp; Haptics Hooks demo animation"/>
+                <figcaption>GIF demo</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="perf">
+        <h2>Performance checklist</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Cache & preload</h3>
+            <ul>
+              <li>Warm up: fonts, atlases, UI sprites, common prefabs.</li>
+              <li>Bundle split: <span class="inline-code">core</span>, <span class="inline-code">meta</span>, <span class="inline-code">gameplay</span>, <span class="inline-code">shop</span>.</li>
+              <li>Preload per feature entry (e.g. shop tab images only when first opened).</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Pooling</h3>
+            <ul>
+              <li>Pool: toast, floating text, confetti emitters, list cells, item cards.</li>
+              <li>On despawn: stop tweens/timers, remove listeners, reset state.</li>
+              <li>Cap concurrent FX (coins/confetti) to avoid spikes.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Scrolling fast</h3>
+            <ul>
+              <li>Virtualize: render only visible range + small buffer.</li>
+              <li>Diff update: update only changed cells (by id), not rebuild list.</li>
+              <li>Throttle: scroll callbacks, text layout, and number counters.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Animation budget</h3>
+            <ul>
+              <li>Prefer transform + opacity (avoid layout reflow during tweens).</li>
+              <li>Batch micro animations (icon pop, badge ping) with shared timeline.</li>
+              <li>Disable offscreen animations; pause when hidden.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <div class="title"><span class="dot"></span>Maintaining this playbook</div>
+          <div>
+            Add a new component by creating a new card (HTML) and dropping its PNG/GIF into <span class="inline-code">assets/img</span> and <span class="inline-code">assets/gif</span>.
+            Keep all shared styling in <span class="inline-code">playbook.css</span> and all behaviors in <span class="inline-code">playbook.js</span>.
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="playbook.js"></script>
+</body>
+</html>
