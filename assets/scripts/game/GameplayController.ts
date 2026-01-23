@@ -7,12 +7,20 @@ import { AppEvent } from '../framework/app/AppConstants';
 
 const { ccclass } = _decorator;
 
-@ccclass('HomeView')
-export class HomeView extends Component {
+@ccclass('GameplayController')
+export class GameplayController extends Component {
   private _bus!: EventBus<AppEvents>;
 
   onLoad(): void {
     this._bus = ServiceLocator.resolve<EventBus<AppEvents>>(Services.EventBus);
     this._bus.emit(AppEvent.Play, {});
+  }
+
+  onClickHome(): void {
+    this._bus.emit(AppEvent.BackToHome, {});
+  }
+  
+  onClickNext(): void {
+    this._bus.emit(AppEvent.Restart, {});
   }
 }

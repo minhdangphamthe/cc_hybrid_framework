@@ -309,7 +309,7 @@
     "__prefab": null,
     "persistAcrossScenes": true,
     "autoAddAppController": true,
-    "sceneMode": "single",
+    "sceneMode": "multi",
     "homeScene": "Home",
     "gameplayScene": "Gameplay",
     "resultScene": "Result",
@@ -326,6 +326,10 @@
     },
     "_enabled": true,
     "__prefab": null,
+    "homeScene": "Home",
+    "autoEnterHome": true,
+    "maxRetries": 20,
+    "retryDelaySec": 0.05,
     "_id": "9bQybFEvVK56EZyCpb83A/"
   },
   {
