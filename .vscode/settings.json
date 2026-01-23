@@ -1,0 +1,27 @@
+{
+  // Sử dụng 2 khoảng trắng cho mỗi tab
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "[typescript]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[javascript]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[json]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "files.exclude": {
+    "**/*.meta": true,
+    "library/": true,
+    "profiles/": true,
+    "temp/": true,
+    "build/": true,
+    "**/*.scene": true,
+    "**/*.mtl": true
+  }
+}
