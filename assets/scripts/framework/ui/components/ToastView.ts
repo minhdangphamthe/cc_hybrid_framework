@@ -1,5 +1,5 @@
 import { _decorator, Label } from 'cc';
-import { UIPopup } from '../UIView';
+import { UIPopup } from '../UIPopup';
 
 const { ccclass, property } = _decorator;
 

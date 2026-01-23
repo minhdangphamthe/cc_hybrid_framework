@@ -1,5 +1,7 @@
 import { Node } from 'cc';
-import { UIScreen, UIPopup, UIView } from '../UIView';
+import { UIPopup } from '../UIPopup';
+import { UIScreen } from '../UIScreen';
+import { UIView } from '../UIView';
 import { UIRoot } from '../UIRoot';
 
 type StackItem<T extends UIView> = { path: string; view: T };

@@ -41,6 +41,8 @@ export * from './app/AppTypes';
 
 export * from './ui/UIRoot';
 export * from './ui/UIView';
+export * from './ui/UIScreen';
+export * from './ui/UIPopup';
 export * from './ui/UITransition';
 export * from './ui/mvvm/Binder';
 export * from './ui/router/UIScreenRouter';

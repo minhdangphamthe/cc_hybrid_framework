@@ -3,7 +3,9 @@ import { ServiceLocator } from '../core/ServiceLocator';
 import { Services } from '../services/ServiceTokens';
 import { IAssetsService } from '../services/interfaces/IAssetsService';
 import { IUIService } from '../services/interfaces/IUIService';
-import { UIScreen, UIPopup, UIView } from './UIView';
+import { UIPopup } from './UIPopup';
+import { UIScreen } from './UIScreen';
+import { UIView } from './UIView';
 import { UIScreenRouter } from './router/UIScreenRouter';
 import { ToastManager } from './components/ToastManager';
 

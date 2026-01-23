@@ -1,4 +1,5 @@
-import { UIScreen, UIPopup } from '../../ui/UIView';
+import { UIPopup } from '../../ui/UIPopup';
+import { UIScreen } from '../../ui/UIScreen';
 
 export interface IUIService {
   openScreen(path: string, params?: any): Promise<UIScreen>;
