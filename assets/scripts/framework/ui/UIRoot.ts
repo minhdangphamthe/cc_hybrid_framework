@@ -88,6 +88,9 @@ export class UIRoot extends Component implements IUIService, IUIHost {
   /** Internal: instantiates a prefab under parent and returns its UIView component. */
   _createView<T extends UIView>(prefab: Prefab, parent: Node, params?: any): T {
     const node = instantiate(prefab);
+    // Prevent one-frame "flash" before transitions can prepare initial state.
+    // Router/Toast will activate via UIView.show().
+    node.active = false;
     node.setParent(parent);
 
     const view = node.getComponent(UIView) as unknown as T;
