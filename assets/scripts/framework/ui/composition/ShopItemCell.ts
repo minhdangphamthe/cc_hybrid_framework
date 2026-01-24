@@ -28,7 +28,8 @@ export class ShopItemCell extends Component {
   }
 
   onDestroy(): void {
-    this.actionButton?.node.off(Button.EventType.CLICK, this._onClick, this);
+    const node = this.actionButton?.node;
+    if (node && node.isValid) node.off(Button.EventType.CLICK, this._onClick, this);
   }
 
   bind(item: ShopItem, onBuy?: (id: string) => void): void {

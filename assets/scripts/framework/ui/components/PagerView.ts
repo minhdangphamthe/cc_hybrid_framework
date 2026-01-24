@@ -21,7 +21,8 @@ export class PagerView extends Component {
   }
 
   onDestroy(): void {
-    this.scrollView?.node.off('scroll-ended', this._onScrollEnded, this);
+    const node = this.scrollView?.node;
+    if (node && node.isValid) node.off('scroll-ended', this._onScrollEnded, this);
   }
 
   setIndex(i: number): void {

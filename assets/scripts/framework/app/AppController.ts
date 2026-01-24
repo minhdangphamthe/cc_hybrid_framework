@@ -1,7 +1,7 @@
 import { _decorator, Component } from 'cc';
 import { FSM, IState } from '../core/FSM';
 import { EventBus } from '../core/EventBus';
-import { IDisposable, Lifetime } from '../core/Lifetime';
+import { CompositeDisposable, IDisposable, Lifetime } from '../core/Lifetime';
 import { ServiceLocator } from '../core/ServiceLocator';
 import { Services } from '../services/ServiceTokens';
 import { ISceneService } from '../services/interfaces/ISceneService';
@@ -153,6 +153,7 @@ start(): void {
 
   private waitEvent<K extends keyof AppEvents>(event: K): Promise<AppEvents[K]> {
     return new Promise((resolve) => {
+      this._pendingWait?.dispose();
       const off = this._bus.on(event, (payload) => {
         this._pendingWait = null;
         off.dispose();
@@ -164,13 +165,19 @@ start(): void {
 
   private waitAny<const T extends readonly (keyof AppEvents)[]>(events: T): Promise<T[number]> {
     return new Promise((resolve) => {
-      const offs = events.map((ev) =>
-        this._bus.on(ev, () => {
-          // dispose all
-          for (const o of offs) o.dispose();
-          resolve(ev);
-        })
-      );
+      this._pendingWait?.dispose();
+      const cd = new CompositeDisposable();
+      this._pendingWait = cd;
+
+      events.forEach((ev) => {
+        cd.add(
+          this._bus.on(ev, () => {
+            this._pendingWait = null;
+            cd.dispose();
+            resolve(ev);
+          }),
+        );
+      });
     });
   }
 
@@ -179,12 +186,19 @@ start(): void {
     events: T,
   ): Promise<{ event: T[number]; payload: any }> {
     return new Promise((resolve) => {
-      const offs = events.map((ev) =>
-        this._bus.on(ev, (payload: any) => {
-          for (const o of offs) o.dispose();
-          resolve({ event: ev, payload });
-        }),
-      );
+      this._pendingWait?.dispose();
+      const cd = new CompositeDisposable();
+      this._pendingWait = cd;
+
+      events.forEach((ev) => {
+        cd.add(
+          this._bus.on(ev, (payload: any) => {
+            this._pendingWait = null;
+            cd.dispose();
+            resolve({ event: ev, payload });
+          }),
+        );
+      });
     });
   }
 

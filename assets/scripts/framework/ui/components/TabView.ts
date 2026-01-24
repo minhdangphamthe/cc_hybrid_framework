@@ -14,19 +14,26 @@ export class TabView extends Component {
 
   private _index = 0;
   private _onChanged: TabChanged | null = null;
+  private _clickHandlers: Array<(() => void) | null> = [];
 
   start(): void {
+    this._clickHandlers.length = this.tabButtons.length;
     this.tabButtons.forEach((btn, i) => {
-      btn.node.on(Button.EventType.CLICK, () => this.setIndex(i), this);
+      const handler = () => this.setIndex(i);
+      this._clickHandlers[i] = handler;
+      btn.node.on(Button.EventType.CLICK, handler, this);
     });
 
     this._apply();
   }
 
   onDestroy(): void {
-    this.tabButtons.forEach((btn) => {
-      btn.node.off(Button.EventType.CLICK);
+    this.tabButtons.forEach((btn, i) => {
+      const node = btn?.node;
+      const handler = this._clickHandlers[i];
+      if (node && node.isValid && handler) node.off(Button.EventType.CLICK, handler, this);
     });
+    this._clickHandlers.length = 0;
   }
 
   setIndex(i: number): void {

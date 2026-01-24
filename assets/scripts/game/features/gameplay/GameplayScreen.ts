@@ -40,9 +40,18 @@ export class GameplayScreen extends UIScreen {
   }
 
   onDispose(): void {
-    this.winButton?.node.off(Button.EventType.CLICK, this._onWin, this);
-    this.loseButton?.node.off(Button.EventType.CLICK, this._onLose, this);
-    this.backButton?.node.off(Button.EventType.CLICK, this._onBack, this);
+    {
+      const node = this.winButton?.node;
+      if (node && node.isValid) node.off(Button.EventType.CLICK, this._onWin, this);
+    }
+    {
+      const node = this.loseButton?.node;
+      if (node && node.isValid) node.off(Button.EventType.CLICK, this._onLose, this);
+    }
+    {
+      const node = this.backButton?.node;
+      if (node && node.isValid) node.off(Button.EventType.CLICK, this._onBack, this);
+    }
   }
 
   private _onWin(): void {

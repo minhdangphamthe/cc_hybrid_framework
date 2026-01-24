@@ -35,8 +35,14 @@ export class ResultScreen extends UIScreen {
   }
 
   onDispose(): void {
-    this.restartButton?.node.off(Button.EventType.CLICK, this._onRestart, this);
-    this.backButton?.node.off(Button.EventType.CLICK, this._onBack, this);
+    {
+      const node = this.restartButton?.node;
+      if (node && node.isValid) node.off(Button.EventType.CLICK, this._onRestart, this);
+    }
+    {
+      const node = this.backButton?.node;
+      if (node && node.isValid) node.off(Button.EventType.CLICK, this._onBack, this);
+    }
   }
 
   private _onRestart(): void {

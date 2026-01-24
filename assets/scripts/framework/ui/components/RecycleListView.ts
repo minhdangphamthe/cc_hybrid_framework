@@ -35,7 +35,8 @@ export class RecycleListView extends Component {
   }
 
   onDestroy(): void {
-    this.scrollView?.node.off('scrolling', this._onScroll, this);
+    const node = this.scrollView?.node;
+    if (node && node.isValid) node.off('scrolling', this._onScroll, this);
   }
 
   setAdapter<T>(adapter: IListAdapter<T>): void {

@@ -36,8 +36,10 @@ export class HomeScreen extends UIScreen {
   }
 
   onDispose(): void {
-    if (this.playButton) {
-      this.playButton.node.off(Button.EventType.CLICK, this._onPlay, this);
+    const btn = this.playButton;
+    const node = btn?.node;
+    if (btn && node && node.isValid) {
+      node.off(Button.EventType.CLICK, this._onPlay, this);
     }
   }
 
