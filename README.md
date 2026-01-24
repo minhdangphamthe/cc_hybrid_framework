@@ -65,7 +65,31 @@ Comments
 
 
 ## Notes
-See `assets/scripts/framework/NOTES.md` for caveats and future improvements.
 
 ## UI Kit
 See `docs/uikit/README_UIKIT_EN.md`.
+
+## Minimal single-scene template (GameEntry + Home/Gameplay/Result)
+This zip includes a minimal project template under `assets/scripts/game`:
+
+- `game/bootstrap/GameEntry.ts` wires AppState -> Screens.
+- `game/features/*` contains feature skeletons (VM + Screen).
+- `game/shared/GameSessionVM.ts` stores a tiny session state.
+
+### How to use (SceneMode.Single)
+1) In your startup scene, create these nodes:
+   - `Framework` node with `FrameworkBootstrap` (sceneMode = Single).
+   - `UIRoot` node (or instantiate `assets/resources/ui/UIRoot.prefab`) with `UIRoot` component.
+   - Add `GameEntry` to any node (recommended: `Framework` node).
+
+2) Create screen prefabs (already included):
+   - `assets/resources/ui/screens/HomeScreen.prefab`
+   - `assets/resources/ui/screens/GameplayScreen.prefab`
+   - `assets/resources/ui/screens/ResultScreen.prefab`
+
+3) Press Play:
+   - Home emits `app/play`
+   - Gameplay emits `app/result` with `{ win, score }`
+   - Result emits `app/restart` or `app/backToHome`
+
+Note: `UIRoot` now supports `replaceScreen()` to avoid unbounded screen stacks.

@@ -21,6 +21,7 @@ export class AppController extends Component {
   private _bus!: EventBus<AppEvents>;
   private _scene!: ISceneService;
   private _analytics: IAnalyticsService | null = null;
+  private _lastResult: { win?: boolean; score?: number } | null = null;
 
   private _opts: AppControllerOptions = {
     mode: SceneMode.Single,
@@ -51,7 +52,7 @@ export class AppController extends Component {
       name: 'Home',
       onEnter: async () => {
         this._analytics?.logEvent(AnalyticsEvent.AppHomeEnter);
-        this._bus.emit(AppEvent.StateChanged, { state: AppState.Home });
+        this._emitStateChanged(AppState.Home);
 
         if (this._opts.mode === SceneMode.Multi && this._opts.scenes?.home) {
           await this.safeLoadScene(this._opts.scenes.home);
@@ -75,21 +76,22 @@ export class AppController extends Component {
       name: 'Gameplay',
       onEnter: async () => {
         this._analytics?.logEvent(AnalyticsEvent.AppGameplayEnter);
-        this._bus.emit(AppEvent.StateChanged, { state: AppState.Gameplay });
+        this._emitStateChanged(AppState.Gameplay);
 
         if (this._opts.mode === SceneMode.Multi && this._opts.scenes?.gameplay) {
           await this.safeLoadScene(this._opts.scenes.gameplay);
         }
 
         // In production: your GameplayController should emit app/restart, app/result, or app/backToHome.
-        const which = await this.waitAny([AppEvent.Restart, AppEvent.Result, AppEvent.BackToHome] as const);
-        if (which === AppEvent.Restart) {
+        const res = await this.waitAnyPayload([AppEvent.Restart, AppEvent.Result, AppEvent.BackToHome] as const);
+        if (res.event === AppEvent.Restart) {
           // Most games restart gameplay directly.
           this._fsm.transition(AppState.Gameplay);
           return;
         }
 
-        if (which === AppEvent.Result) {
+        if (res.event === AppEvent.Result) {
+          this._lastResult = res.payload ?? {};
           // Go to Result when available; otherwise fall back to Home.
           if (this._opts.mode === SceneMode.Multi && !this._opts.scenes?.result) {
             this._fsm.transition(AppState.Home);
@@ -110,7 +112,7 @@ export class AppController extends Component {
       name: 'Result',
       onEnter: async () => {
         this._analytics?.logEvent(AnalyticsEvent.AppResultEnter);
-        this._bus.emit(AppEvent.StateChanged, { state: AppState.Result });
+        this._emitStateChanged(AppState.Result, this._lastResult ?? undefined);
 
         if (this._opts.mode === SceneMode.Multi && this._opts.scenes?.result) {
           await this.safeLoadScene(this._opts.scenes.result);
@@ -125,7 +127,16 @@ export class AppController extends Component {
     this._fsm.add(boot).add(home).add(gameplay).add(result);
   }
 
-  start(): void {
+  
+  private _emitStateChanged(state: AppState, data?: unknown): void {
+    // Defer emission to next frame so listeners (e.g. GameEntry) can subscribe safely,
+    // regardless of component start order.
+    this.scheduleOnce(() => {
+      this._bus.emit(AppEvent.StateChanged, { state, data });
+    }, 0);
+  }
+
+start(): void {
     // Start app
     this._fsm.transition(AppState.Boot);
   }
@@ -163,6 +174,20 @@ export class AppController extends Component {
     });
   }
 
+
+  private waitAnyPayload<const T extends readonly (keyof AppEvents)[]>(
+    events: T,
+  ): Promise<{ event: T[number]; payload: any }> {
+    return new Promise((resolve) => {
+      const offs = events.map((ev) =>
+        this._bus.on(ev, (payload: any) => {
+          for (const o of offs) o.dispose();
+          resolve({ event: ev, payload });
+        }),
+      );
+    });
+  }
+
   private async safeLoadScene(sceneName: string): Promise<void> {
     if (!this._scene) return;
     try {
@@ -170,7 +195,7 @@ export class AppController extends Component {
         preload: true,
         onProgress: (p) => {
           // Optional: broadcast progress to UI
-          this._bus.emit(AppEvent.StateChanged, { state: AppState.Loading, data: p });
+          this._emitStateChanged(AppState.Loading, p);
         },
       });
     } catch (e: any) {

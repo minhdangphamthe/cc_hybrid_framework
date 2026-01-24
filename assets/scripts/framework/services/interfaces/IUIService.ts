@@ -3,6 +3,7 @@ import { UIScreen } from '../../ui/UIScreen';
 
 export interface IUIService {
   openScreen(path: string, params?: any): Promise<UIScreen>;
+  replaceScreen(path: string, params?: any): Promise<UIScreen>;
   closeTopScreen(): Promise<void>;
   openPopup(path: string, params?: any): Promise<UIPopup>;
   closeTopPopup(): Promise<void>;

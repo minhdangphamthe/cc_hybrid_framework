@@ -55,6 +55,10 @@ export class UIRoot extends Component implements IUIService, IUIHost {
     return this.router.pushScreen(path, params);
   }
 
+  async replaceScreen(path: string, params?: any): Promise<UIScreen> {
+    return this.router.replaceScreen(path, params);
+  }
+
   async closeTopScreen(): Promise<void> {
     await this.router.popScreen();
   }
