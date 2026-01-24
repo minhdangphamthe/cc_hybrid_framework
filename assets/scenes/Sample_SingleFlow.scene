@@ -285,9 +285,9 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "homeScreenPath": "ui/screens/HomeScreen_1",
-    "gameplayScreenPath": "ui/screens/GameplayScreen_1",
-    "resultScreenPath": "ui/screens/ResultScreen_1",
+    "homeScreenPath": "ui/screens/HomeScreen",
+    "gameplayScreenPath": "ui/screens/GameplayScreen",
+    "resultScreenPath": "ui/screens/ResultScreen",
     "_id": "dd4wNvo2JDh6f16WIxZOM3"
   },
   {
