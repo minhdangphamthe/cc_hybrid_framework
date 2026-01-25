@@ -1,5 +1,5 @@
-import { ObservableValue } from '../mvvm/ObservableValue';
-import { ViewModel } from '../mvvm/ViewModel';
+import { ObservableValue } from '../../../framework/ui/mvvm/ObservableValue';
+import { ViewModel } from '../../../framework/ui/mvvm/ViewModel';
 
 export type LeaderboardRow = { rank: number; name: string; score: number; isMe?: boolean };
 

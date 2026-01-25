@@ -1,11 +1,11 @@
 import { _decorator, Label } from 'cc';
-import { ServiceLocator } from '../../core/ServiceLocator';
-import { Services } from '../../services/ServiceTokens';
-import { IAnalyticsService } from '../../services/interfaces/IAnalyticsService';
-import { AnalyticsEvent } from '../../analytics/AnalyticsEvents';
-import { RecycleListView, IListAdapter } from '../components/RecycleListView';
-import { Binder } from '../mvvm/Binder';
-import { UIScreen } from '../UIScreen';
+import { ServiceLocator } from '../../../framework/core/ServiceLocator';
+import { Services } from '../../../framework/services/ServiceTokens';
+import { IAnalyticsService } from '../../../framework/services/interfaces/IAnalyticsService';
+import { AnalyticsEvent } from '../../../framework/analytics/AnalyticsEvents';
+import { RecycleListView, IListAdapter } from '../../../framework/ui/components/RecycleListView';
+import { Binder } from '../../../framework/ui/mvvm/Binder';
+import { UIScreen } from '../../../framework/ui/UIScreen';
 import { ShopItemCell } from './ShopItemCell';
 import { ShopVM, ShopItem } from './ShopVM';
 

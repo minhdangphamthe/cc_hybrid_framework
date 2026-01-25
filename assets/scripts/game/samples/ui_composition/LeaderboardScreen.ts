@@ -1,7 +1,7 @@
 import { _decorator, Label } from 'cc';
-import { RecycleListView, IListAdapter } from '../components/RecycleListView';
-import { Binder } from '../mvvm/Binder';
-import { UIScreen } from '../UIScreen';
+import { RecycleListView, IListAdapter } from '../../../framework/ui/components/RecycleListView';
+import { Binder } from '../../../framework/ui/mvvm/Binder';
+import { UIScreen } from '../../../framework/ui/UIScreen';
 import { LeaderboardRowCell } from './LeaderboardRowCell';
 import { LeaderboardVM, LeaderboardRow } from './LeaderboardVM';
 

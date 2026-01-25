@@ -137,3 +137,59 @@ await UIListBuilder.rebuildAsync(
 ### Notes
 - The router automatically runs warmup for screens/popups if the host (`UIRoot`) implements `_createViewPrepared`.
 - Warmup updates `Layout` and `Widget` trees and yields a couple of frames before the view becomes visible.
+
+## Smooth UX for heavy screens (nested lists, micro-glitch prevention)
+
+### View lifecycle for warmup
+All `UIView`-based prefabs (screens/popups) can optionally implement:
+
+- `onPreload(params)` - preload additional assets (item prefabs, sprite frames, etc.)
+- `onBeforeShow(params)` - build nested lists/items while the view is still hidden
+- Router will warm up Widgets/Layout before the first visible frame.
+
+### Delayed LoadingOverlay during warmup
+`UIRoot` registers `Services.LoadingOverlay` (runtime-built, no prefab required).
+
+Router will automatically show the overlay if a screen/popup warmup takes longer than a short delay.
+
+You can also show/hide it manually:
+
+```ts
+import { ServiceLocator } from './assets/scripts/framework/core/ServiceLocator';
+import { Services } from './assets/scripts/framework/services/ServiceTokens';
+import type { ILoadingOverlayService } from './assets/scripts/framework/services/interfaces/ILoadingOverlayService';
+
+const loading = ServiceLocator.resolve<ILoadingOverlayService>(Services.LoadingOverlay);
+const h = loading.show({ message: 'Loading...', minDurationMs: 250 });
+try {
+  // do async work
+} finally {
+  h.dispose();
+}
+```
+
+### Preload / Warmup API (optional)
+`IUIService` now provides two optional helpers:
+
+- `preloadView(path)` loads the prefab into cache
+- `warmupView(path, params)` instantiates offscreen, runs hooks + warmup, then destroys
+
+Example:
+
+```ts
+const ui = ServiceLocator.resolve<IUIService>(Services.UI);
+await ui.preloadView('ui/screens/HomeScreen');
+await ui.warmupView('ui/screens/GameplayScreen', { items: [] });
+```
+
+### Chunked list building (cancel-safe)
+Use `UIListBuilder.rebuildAsync()` with `isCanceled` to avoid work after the view is disposed:
+
+```ts
+await UIListBuilder.rebuildAsync(container, itemPrefab, data, bindItem, pool, {
+  batchSize: 24,
+  yieldFrames: 1,
+  isCanceled: () => this._life.isDisposed,
+});
+```
+

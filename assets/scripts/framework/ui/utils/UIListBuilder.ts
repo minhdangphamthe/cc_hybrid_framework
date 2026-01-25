@@ -2,6 +2,9 @@ import { Node, NodePool, Prefab, instantiate, isValid } from 'cc';
 import { UIWarmup } from './UIWarmup';
 
 export interface ListBuildOptions {
+  /** Return true to cancel build early (e.g. view disposed). */
+  isCanceled?: () => boolean;
+
   /**
    * How many items to build per frame. Smaller = smoother, larger = faster.
    */
@@ -36,6 +39,7 @@ export class UIListBuilder {
 
     // Return existing items to pool (optional).
     while (container.children.length > 0) {
+      if (opts.isCanceled?.()) return;
       const child = container.children[0];
       child.removeFromParent();
       if (pool) pool.put(child);
@@ -43,6 +47,8 @@ export class UIListBuilder {
     }
 
     for (let i = 0; i < data.length; i += 1) {
+      if (opts.isCanceled?.()) return;
+      if (!isValid(container, true)) return;
       const datum = data[i];
       const item = pool?.get() ?? instantiate(itemPrefab);
       item.setParent(container);
@@ -51,8 +57,12 @@ export class UIListBuilder {
       // Chunking.
       const doneInBatch = (i + 1) % batchSize === 0 || i === data.length - 1;
       if (doneInBatch) {
+        if (opts.isCanceled?.()) return;
         if (refreshLayout) UIWarmup.refreshLayoutTree(container);
-        for (let f = 0; f < yieldFrames; f += 1) await UIWarmup.nextFrame();
+        for (let f = 0; f < yieldFrames; f += 1) {
+          if (opts.isCanceled?.()) return;
+          await UIWarmup.nextFrame();
+        }
       }
     }
 

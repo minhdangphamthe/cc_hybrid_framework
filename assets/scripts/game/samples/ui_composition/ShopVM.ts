@@ -1,5 +1,5 @@
-import { ObservableValue } from '../mvvm/ObservableValue';
-import { ViewModel } from '../mvvm/ViewModel';
+import { ObservableValue } from '../../../framework/ui/mvvm/ObservableValue';
+import { ViewModel } from '../../../framework/ui/mvvm/ViewModel';
 
 export type ShopItem = { id: string; title: string; price: string; owned?: boolean; badge?: string };
 

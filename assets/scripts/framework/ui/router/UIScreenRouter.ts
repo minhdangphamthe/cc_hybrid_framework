@@ -1,4 +1,8 @@
 import { Node } from 'cc';
+import { ServiceLocator } from '../../core/ServiceLocator';
+import { Services } from '../../services/ServiceTokens';
+import type { ILoadingOverlayService } from '../../services/interfaces/ILoadingOverlayService';
+import { UIWarmup } from '../utils/UIWarmup';
 import { IUIHost } from '../IUIHost';
 import { UIPopup } from '../UIPopup';
 import { UIScreen } from '../UIScreen';
@@ -27,9 +31,11 @@ export class UIScreenRouter {
     try {
       const prefab = await this._root._loadPrefab(path);
       const layer = this._requireLayer(this._root.screensLayer, 'screensLayer');
-      const next = this._root._createViewPrepared
-        ? await this._root._createViewPrepared<UIScreen>(prefab, layer, params)
-        : this._root._createView<UIScreen>(prefab, layer, params);
+      const next = await this._withWarmupOverlay(async () => {
+        return this._root._createViewPrepared
+          ? await this._root._createViewPrepared<UIScreen>(prefab, layer, params)
+          : this._root._createView<UIScreen>(prefab, layer, params);
+      });
 
       const cur = this._topScreen();
       if (cur) await cur.hide();
@@ -68,9 +74,11 @@ export class UIScreenRouter {
     try {
       const prefab = await this._root._loadPrefab(path);
       const layer = this._requireLayer(this._root.screensLayer, 'screensLayer');
-      const next = this._root._createViewPrepared
-        ? await this._root._createViewPrepared<UIScreen>(prefab, layer, params)
-        : this._root._createView<UIScreen>(prefab, layer, params);
+      const next = await this._withWarmupOverlay(async () => {
+        return this._root._createViewPrepared
+          ? await this._root._createViewPrepared<UIScreen>(prefab, layer, params)
+          : this._root._createView<UIScreen>(prefab, layer, params);
+      });
 
       const top = this._screens.pop();
       if (top) {
@@ -93,9 +101,11 @@ export class UIScreenRouter {
     try {
       const prefab = await this._root._loadPrefab(path);
       const layer = this._requireLayer(this._root.popupsLayer, 'popupsLayer');
-      const pop = this._root._createViewPrepared
-        ? await this._root._createViewPrepared<UIPopup>(prefab, layer, params)
-        : this._root._createView<UIPopup>(prefab, layer, params);
+      const pop = await this._withWarmupOverlay(async () => {
+        return this._root._createViewPrepared
+          ? await this._root._createViewPrepared<UIPopup>(prefab, layer, params)
+          : this._root._createView<UIPopup>(prefab, layer, params);
+      });
 
       this._popups.push({ path, view: pop });
       await pop.show();
@@ -136,6 +146,31 @@ export class UIScreenRouter {
     }
     this._screens.length = 0;
     this._popups.length = 0;
+  }
+
+
+  private async _withWarmupOverlay<T>(work: () => Promise<T>): Promise<T> {
+    const loading = ServiceLocator.tryResolve<ILoadingOverlayService>(Services.LoadingOverlay);
+    if (!loading) return work();
+
+    const delayMs = 120; // show overlay only if warmup takes noticeable time
+    const minDurationMs = 220; // avoid flash
+    let handle: { dispose: () => void } | null = null;
+    let done = false;
+
+    // Show after a short delay.
+    void (async () => {
+      await UIWarmup.delayMs(delayMs);
+      if (done) return;
+      handle = loading.show({ blockInput: true, minDurationMs });
+    })();
+
+    try {
+      return await work();
+    } finally {
+      done = true;
+      handle?.dispose();
+    }
   }
 
   private _topScreen(): UIScreen | null {

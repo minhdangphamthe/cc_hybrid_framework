@@ -55,12 +55,7 @@ export * from './ui/components/ToastView';
 export * from './ui/components/TabView';
 export * from './ui/components/PagerView';
 export * from './ui/components/RecycleListView';
-export * from './ui/composition/ShopVM';
-export * from './ui/composition/ShopScreen';
-export * from './ui/composition/ShopItemCell';
-export * from './ui/composition/LeaderboardVM';
-export * from './ui/composition/LeaderboardScreen';
-export * from './ui/composition/LeaderboardRowCell';
 
 export * from './ui/utils/UIWarmup';
 export * from './ui/utils/UIListBuilder';
+export * from './services/interfaces/ILoadingOverlayService';

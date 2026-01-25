@@ -12,6 +12,7 @@ export const Services = {
   Time: 'Time',
   Scene: 'Scene',
   UI: 'UI',
+  LoadingOverlay: 'LoadingOverlay',
 } as const;
 
 export type ServiceName = typeof Services[keyof typeof Services];

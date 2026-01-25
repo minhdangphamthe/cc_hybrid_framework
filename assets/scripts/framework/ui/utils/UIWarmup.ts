@@ -85,6 +85,11 @@ export class UIWarmup {
     };
   }
 
+  static delayMs(ms: number): Promise<void> {
+    const t = Math.max(0, ms | 0);
+    return new Promise((resolve) => setTimeout(resolve, t));
+  }
+
   static nextFrame(): Promise<void> {
     return new Promise((resolve) => {
       director.once(Director.EVENT_AFTER_UPDATE, resolve);

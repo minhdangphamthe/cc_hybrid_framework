@@ -4,6 +4,8 @@ import { ServiceLocator } from '../core/ServiceLocator';
 import { Services } from '../services/ServiceTokens';
 import { IAssetsService } from '../services/interfaces/IAssetsService';
 import { IUIService } from '../services/interfaces/IUIService';
+import { ILoadingOverlayService } from '../services/interfaces/ILoadingOverlayService';
+import { UILoadingOverlayService } from '../services/impl/UILoadingOverlayService';
 import { IUIHost } from './IUIHost';
 import { UIPopup } from './UIPopup';
 import { UIScreen } from './UIScreen';
@@ -33,6 +35,9 @@ export class UIRoot extends Component implements IUIService, IUIHost {
   router!: UIScreenRouter;
   toast!: ToastManager;
 
+  private _prefabCache = new Map<string, Prefab>();
+  private _loading: ILoadingOverlayService | null = null;
+
   onLoad(): void {
     if (!this.screensLayer) this.screensLayer = this.node;
     if (!this.popupsLayer) this.popupsLayer = this.node;
@@ -44,6 +49,11 @@ export class UIRoot extends Component implements IUIService, IUIHost {
     this.toast = new ToastManager(this);
 
     ServiceLocator.register(Services.UI, this as unknown as IUIService);
+
+    // Optional: a small loading overlay to mask heavy UI warmup.
+    this._loading = new UILoadingOverlayService(this.overlayLayer ?? this.node);
+    ServiceLocator.register(Services.LoadingOverlay, this._loading);
+
   }
 
   onDestroy(): void {
@@ -54,6 +64,23 @@ export class UIRoot extends Component implements IUIService, IUIHost {
     if (cur === (this as unknown as IUIService)) {
       ServiceLocator.unregister(Services.UI);
     }
+
+    const loading = ServiceLocator.tryResolve<ILoadingOverlayService>(Services.LoadingOverlay);
+    if (loading === this._loading) {
+      ServiceLocator.unregister(Services.LoadingOverlay);
+    }
+  }
+
+  async preloadView(path: string): Promise<void> {
+    await this._loadPrefab(path);
+  }
+
+  async warmupView(path: string, params?: any): Promise<void> {
+    const prefab = await this._loadPrefab(path);
+    const staging = this.stagingLayer ?? this.overlayLayer ?? this.node;
+    const view = await this._createViewPrepared<UIView>(prefab, staging, params);
+    // Destroy immediately after warmup to free nodes (assets remain cached by engine).
+    if (view.node && view.node.isValid) view.node.destroy();
   }
 
   async openScreen(path: string, params?: any): Promise<UIScreen> {
@@ -86,8 +113,13 @@ export class UIRoot extends Component implements IUIService, IUIHost {
 
   /** Internal: loads a prefab using IAssetsService. */
   async _loadPrefab(path: string): Promise<Prefab> {
+    const cached = this._prefabCache.get(path);
+    if (cached) return cached;
+
     const assets = ServiceLocator.resolve<IAssetsService>(Services.Assets);
-    return assets.loadPrefab(path);
+    const prefab = await assets.loadPrefab(path);
+    this._prefabCache.set(path, prefab);
+    return prefab;
   }
 
   /**

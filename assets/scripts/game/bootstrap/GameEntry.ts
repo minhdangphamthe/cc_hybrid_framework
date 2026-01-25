@@ -6,6 +6,7 @@ import { Services } from '../../framework/services/ServiceTokens';
 import { AppEvent, AppState } from '../../framework/app/AppConstants';
 import type { AppEvents } from '../../framework/app/AppEvents';
 import type { IUIService } from '../../framework/services/interfaces/IUIService';
+import { UIWarmup } from '../../framework/ui/utils/UIWarmup';
 
 import { GameSessionVM } from '../shared/GameSessionVM';
 import { HomeVM } from '../features/home/HomeVM';
@@ -29,6 +30,9 @@ export class GameEntry extends Component {
 
   @property({ tooltip: 'Resources path for Result screen prefab.' })
   resultScreenPath = 'ui/screens/ResultScreen';
+
+  @property({ tooltip: 'Preload and warm up heavy screens offscreen to reduce micro-glitches.' })
+  enableUiPrewarm = true;
 
   private _life = new Lifetime();
 
@@ -55,6 +59,8 @@ export class GameEntry extends Component {
     }
 
     // Drive UI based on AppController state changes.
+    if (this.enableUiPrewarm) void this._prewarmUi();
+
     this._life.own(this._bus.on(AppEvent.StateChanged, (p) => void this._onStateChanged(p)));
 
     // If AppController is not present, you can still start Home manually:
@@ -63,6 +69,28 @@ export class GameEntry extends Component {
 
   onDestroy(): void {
     this._life.dispose();
+  }
+
+  private async _prewarmUi(): Promise<void> {
+    if (!this._ui) return;
+
+    try {
+      // Ensure current frame is free (don't block the first render).
+      await UIWarmup.nextFrame();
+
+      // Preload screen prefabs (engine caches them).
+      await this._ui.preloadView(this.homeScreenPath);
+      await this._ui.preloadView(this.gameplayScreenPath);
+      await this._ui.preloadView(this.resultScreenPath);
+
+      // Warm up non-home screens with light params (optional).
+      await UIWarmup.nextFrame();
+      await this._ui.warmupView(this.gameplayScreenPath, { vm: this._gameplayVM, session: this._session });
+      await this._ui.warmupView(this.resultScreenPath, { vm: this._resultVM, session: this._session });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('[GameEntry] UI prewarm failed', e);
+    }
   }
 
   private async _onStateChanged(payload: { state: AppState; data?: any }): Promise<void> {
