@@ -1,4 +1,5 @@
 import { _decorator, Component, instantiate, Node, Prefab } from 'cc';
+import { UIWarmup } from './utils/UIWarmup';
 import { ServiceLocator } from '../core/ServiceLocator';
 import { Services } from '../services/ServiceTokens';
 import { IAssetsService } from '../services/interfaces/IAssetsService';
@@ -24,6 +25,9 @@ export class UIRoot extends Component implements IUIService, IUIHost {
   overlayLayer: Node | null = null;
 
   @property(Node)
+  stagingLayer: Node | null = null;
+
+  @property(Node)
   toastLayer: Node | null = null;
 
   router!: UIScreenRouter;
@@ -33,6 +37,7 @@ export class UIRoot extends Component implements IUIService, IUIHost {
     if (!this.screensLayer) this.screensLayer = this.node;
     if (!this.popupsLayer) this.popupsLayer = this.node;
     if (!this.overlayLayer) this.overlayLayer = this.node;
+    if (!this.stagingLayer) this.stagingLayer = this.overlayLayer;
     if (!this.toastLayer) this.toastLayer = this.node;
 
     this.router = new UIScreenRouter(this);
@@ -83,6 +88,65 @@ export class UIRoot extends Component implements IUIService, IUIHost {
   async _loadPrefab(path: string): Promise<Prefab> {
     const assets = ServiceLocator.resolve<IAssetsService>(Services.Assets);
     return assets.loadPrefab(path);
+  }
+
+  /**
+   * Internal: instantiates a prefab and runs an optional warmup pipeline for heavy UIs.
+   *
+   * Why:
+   * - Complex screens (nested lists, widgets, layouts) can cause micro-glitches if they are shown immediately.
+   * - Warmup lets you build child items and refresh Layout/Widget before the first visible frame.
+   *
+   * Lifecycle order:
+   * 1) onCreate(params)
+   * 2) onPreload(params)            (optional async)
+   * 3) onBeforeShow(params)         (optional async)  <-- build lists here (prefer chunked)
+   * 4) warmup layout + yield frames
+   * 5) router will call view.show() later
+   */
+  async _createViewPrepared<T extends UIView>(prefab: Prefab, parent: Node, params?: any): Promise<T> {
+    const staging = this.stagingLayer ?? parent;
+
+    const node = instantiate(prefab);
+    node.active = true;
+    node.setParent(staging);
+
+    // Hide before any frame can render.
+    const hidden = UIWarmup.ensureHiddenOpacity(node);
+
+    const view = node.getComponent(UIView) as unknown as T;
+    if (!view) throw new Error(`[UIRoot] Prefab must have a UIView component: ${prefab.name}`);
+
+    try {
+      view.onCreate?.(params);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn(e);
+    }
+
+    try {
+      await view.onPreload?.(params);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn(e);
+    }
+
+    try {
+      await view.onBeforeShow?.(params);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn(e);
+    }
+
+    // Warm up layout tree (Widgets/Layout) to avoid first-frame jumps.
+    await UIWarmup.warmup(node, { frames: 2, refreshLayoutTree: true, keepActive: true });
+
+    // Move into final parent, keep hidden until router calls show().
+    node.setParent(parent);
+    node.active = false;
+    hidden.restore();
+
+    return view;
   }
 
   /** Internal: instantiates a prefab under parent and returns its UIView component. */

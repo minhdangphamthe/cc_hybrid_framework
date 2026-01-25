@@ -27,7 +27,9 @@ export class UIScreenRouter {
     try {
       const prefab = await this._root._loadPrefab(path);
       const layer = this._requireLayer(this._root.screensLayer, 'screensLayer');
-      const next = this._root._createView<UIScreen>(prefab, layer, params);
+      const next = this._root._createViewPrepared
+        ? await this._root._createViewPrepared<UIScreen>(prefab, layer, params)
+        : this._root._createView<UIScreen>(prefab, layer, params);
 
       const cur = this._topScreen();
       if (cur) await cur.hide();
@@ -66,7 +68,9 @@ export class UIScreenRouter {
     try {
       const prefab = await this._root._loadPrefab(path);
       const layer = this._requireLayer(this._root.screensLayer, 'screensLayer');
-      const next = this._root._createView<UIScreen>(prefab, layer, params);
+      const next = this._root._createViewPrepared
+        ? await this._root._createViewPrepared<UIScreen>(prefab, layer, params)
+        : this._root._createView<UIScreen>(prefab, layer, params);
 
       const top = this._screens.pop();
       if (top) {
@@ -89,7 +93,9 @@ export class UIScreenRouter {
     try {
       const prefab = await this._root._loadPrefab(path);
       const layer = this._requireLayer(this._root.popupsLayer, 'popupsLayer');
-      const pop = this._root._createView<UIPopup>(prefab, layer, params);
+      const pop = this._root._createViewPrepared
+        ? await this._root._createViewPrepared<UIPopup>(prefab, layer, params)
+        : this._root._createView<UIPopup>(prefab, layer, params);
 
       this._popups.push({ path, view: pop });
       await pop.show();

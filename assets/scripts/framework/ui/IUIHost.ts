@@ -13,4 +13,5 @@ export interface IUIHost {
 
   _loadPrefab(path: string): Promise<Prefab>;
   _createView<T extends UIView>(prefab: Prefab, parent: Node, params?: any): T;
+  _createViewPrepared?<T extends UIView>(prefab: Prefab, parent: Node, params?: any): Promise<T>;
 }

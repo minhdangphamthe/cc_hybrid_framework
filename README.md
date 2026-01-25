@@ -93,3 +93,47 @@ This zip includes a minimal project template under `assets/scripts/game`:
    - Result emits `app/restart` or `app/backToHome`
 
 Note: `UIRoot` now supports `replaceScreen()` to avoid unbounded screen stacks.
+
+
+## Smooth UI for complex screens (preload + warmup)
+When a screen contains nested lists, many Widgets, or expensive binding, it can cause micro-glitches on the first visible frame.
+This framework supports an optional warmup pipeline for any `UIView` (screens and popups).
+
+### Lifecycle hooks (optional)
+Add these methods to your `UIScreen` / `UIPopup` (they are detected automatically):
+
+- `onPreload(params): Promise<void> | void`
+  - Load extra assets you will need (item prefabs, sprite frames, etc).
+  - Runs after `onCreate`, before the view is shown.
+
+- `onBeforeShow(params): Promise<void> | void`
+  - Build list items, apply bindings, precompute layouts.
+  - Runs while the view is hidden (opacity 0) and attached to a staging layer.
+
+- `onAfterShow(): void`
+  - Runs after `UIView.show()` finishes (after transition).
+
+- `onBeforeHide(): Promise<void> | void`
+  - Runs before `UIView.hide()` starts (optional cleanup).
+
+### Chunked list building (avoid frame spikes)
+Use `UIListBuilder.rebuildAsync()` to render many items without a single long frame:
+
+```ts
+import { UIListBuilder } from '../../framework/ui/utils/UIListBuilder';
+
+await UIListBuilder.rebuildAsync(
+  this.contentNode,
+  this.itemPrefab,
+  data,
+  (item, datum, index) => {
+    // bind item UI here
+  },
+  this._pool,                 // optional NodePool
+  { batchSize: 20, yieldFrames: 1 },
+);
+```
+
+### Notes
+- The router automatically runs warmup for screens/popups if the host (`UIRoot`) implements `_createViewPrepared`.
+- Warmup updates `Layout` and `Widget` trees and yields a couple of frames before the view becomes visible.
