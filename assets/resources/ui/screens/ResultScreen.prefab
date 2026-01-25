@@ -1282,7 +1282,7 @@
     "__prefab": {
       "__id__": 49
     },
-    "transition": "scaleFade",
+    "transition": "fade",
     "titleLabel": {
       "__id__": 11
     },

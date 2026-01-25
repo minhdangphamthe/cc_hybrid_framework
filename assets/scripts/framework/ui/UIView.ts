@@ -1,4 +1,4 @@
-import { _decorator, Component } from 'cc';
+import { _decorator, Component, Enum } from 'cc';
 import { Lifetime } from '../core/Lifetime';
 import { TransitionKind, UITransition } from './UITransition';
 
@@ -6,7 +6,7 @@ const { ccclass, property } = _decorator;
 
 @ccclass('UIView')
 export class UIView extends Component {
-  @property({ tooltip: 'Animation used when show/hide view.' })
+  @property({ type: Enum(TransitionKind), tooltip: 'Animation used when show/hide view.' })
   transition: TransitionKind = TransitionKind.ScaleFade;
 
   protected _life = new Lifetime();

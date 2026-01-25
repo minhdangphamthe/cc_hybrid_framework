@@ -15,15 +15,19 @@ export const AppEvent = {
 
 export type AppEventName = typeof AppEvent[keyof typeof AppEvent];
 
-export enum AppState {
-  Boot = 'Boot',
-  Home = 'Home',
-  Gameplay = 'Gameplay',
-  Result = 'Result',
-  Loading = 'Loading',
+export const AppState = {
+  Boot: 'Boot',
+  Home: 'Home',
+  Gameplay: 'Gameplay',
+  Result: 'Result',
+  Loading: 'Loading',
 }
 
-export enum SceneMode {
-  Single = 'single',
-  Multi = 'multi',
+export type AppState = typeof AppState[keyof typeof AppState];
+
+export const SceneMode = {
+  Single: 'single',
+  Multi: 'multi',
 }
+
+export type SceneMode = typeof SceneMode[keyof typeof SceneMode];
