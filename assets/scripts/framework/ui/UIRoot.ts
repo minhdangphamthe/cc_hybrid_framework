@@ -111,6 +111,10 @@ export class UIRoot extends Component implements IUIService, IUIHost {
     this.toast.show(text, durationSec);
   }
 
+  async handleBack(): Promise<boolean> {
+    return this.router.handleBack();
+  }
+
   /** Internal: loads a prefab using IAssetsService. */
   async _loadPrefab(path: string): Promise<Prefab> {
     const cached = this._prefabCache.get(path);
@@ -149,6 +153,16 @@ export class UIRoot extends Component implements IUIService, IUIHost {
     const view = node.getComponent(UIView) as unknown as T;
     if (!view) throw new Error(`[UIRoot] Prefab must have a UIView component: ${prefab.name}`);
 
+    // Screen warmup notifications (input blocking for heavy UI).
+    if ((view as unknown as UIScreen).notifyWarmupStart) {
+      try {
+        (view as unknown as UIScreen).notifyWarmupStart();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn(e);
+      }
+    }
+
     try {
       view.onCreate?.(params);
     } catch (e) {
@@ -172,6 +186,16 @@ export class UIRoot extends Component implements IUIService, IUIHost {
 
     // Warm up layout tree (Widgets/Layout) to avoid first-frame jumps.
     await UIWarmup.warmup(node, { frames: 2, refreshLayoutTree: true, keepActive: true });
+
+    // Warmup finished.
+    if ((view as unknown as UIScreen).notifyWarmupDone) {
+      try {
+        (view as unknown as UIScreen).notifyWarmupDone();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn(e);
+      }
+    }
 
     // Move into final parent, keep hidden until router calls show().
     node.setParent(parent);

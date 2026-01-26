@@ -2,6 +2,8 @@ import { _decorator, Component, director, Enum, Node } from 'cc';
 import { EventBus } from './core/EventBus';
 import { ServiceLocator } from './core/ServiceLocator';
 import { Services } from './services/ServiceTokens';
+import type { IInputService } from './services/interfaces/IInputService';
+import type { IUIService } from './services/interfaces/IUIService';
 
 import { AppController } from './app/AppController';
 import { CocosAssetsService } from './services/impl/CocosAssetsService';
@@ -29,6 +31,7 @@ const DEFAULT_SAVE_PREFIX = 'game_';
  */
 @ccclass('FrameworkBootstrap')
 export class FrameworkBootstrap extends Component {
+  private _unsubBack: (() => void) | null = null;
   @property({ tooltip: 'Keep this node alive across scene changes (recommended).' })
   persistAcrossScenes = true;
 
@@ -59,6 +62,12 @@ export class FrameworkBootstrap extends Component {
   @property({ tooltip: "Manifest path under resources (without extension). Example: 'prefetch/ui_prefetch_manifest'" })
   uiPrefetchManifest = 'prefetch/ui_prefetch_manifest';
 
+  @property({ tooltip: 'Enable ESC / Android back key navigation and route it to UI router.' })
+  enableBackKey = true;
+
+  @property({ tooltip: 'Web: consume ESC to route back to UI (best-effort). Browsers may still exit fullscreen on ESC.' })
+  webConsumeEscapeKey = true;
+
   onLoad(): void {
     if (this.persistAcrossScenes) {
       director.addPersistRootNode(this.node);
@@ -73,6 +82,23 @@ export class FrameworkBootstrap extends Component {
       // Run next tick to allow UIRoot to register Services.UI.
       this.scheduleOnce(() => {
         void UIPrefetcher.tryRunFromManifest(this.uiPrefetchManifest, { maxFrames: 120, budgetMsPerTick: 6 });
+      }, 0);
+    }
+
+    if (this.enableBackKey) {
+      // Wire default back key (ESC / Android back) into the UI router.
+      this.scheduleOnce(() => {
+        const input = ServiceLocator.tryResolve<IInputService>(Services.Input);
+        const ui = ServiceLocator.tryResolve<IUIService>(Services.UI);
+        if (!input || !ui) return;
+
+        input.setBackKeyOptions({ webConsumeEscapeKey: this.webConsumeEscapeKey });
+
+        // Unsubscribe previous just in case.
+        this._unsubBack?.();
+        this._unsubBack = input.onBack(() => {
+          void ui.handleBack();
+        });
       }, 0);
     }
 

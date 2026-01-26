@@ -16,4 +16,7 @@ export interface IUIService {
   closeTopPopup(): Promise<void>;
   closeAllPopups(): Promise<void>;
   showToast(text: string, durationSec?: number): void;
+
+  /** Handle default back navigation (ESC / Android back). */
+  handleBack(): Promise<boolean>;
 }

@@ -34,9 +34,11 @@ export class CocosAssetsService implements IAssetsService {
   loadPrefab(path: string, opts?: LoadOptions): Promise<Prefab> {
     return this.load(path, Prefab, opts);
   }
+  
   loadSpriteFrame(path: string, opts?: LoadOptions): Promise<SpriteFrame> {
     return this.load(path, SpriteFrame, opts);
   }
+
   loadTexture(path: string, opts?: LoadOptions): Promise<Texture2D> {
     return this.load(path, Texture2D, opts);
   }

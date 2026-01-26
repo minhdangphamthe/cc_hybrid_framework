@@ -9,6 +9,7 @@ export interface IUIHost {
   readonly screensLayer: Node | null;
   readonly popupsLayer: Node | null;
   readonly overlayLayer: Node | null;
+  readonly stagingLayer: Node | null;
   readonly toastLayer: Node | null;
 
   _loadPrefab(path: string): Promise<Prefab>;

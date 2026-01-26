@@ -16,5 +16,14 @@ export interface IInputService extends IService {
   onPointerMove(cb: (e: PointerDown) => void): void;
   onPointerUp(cb: (e: PointerDown) => void): void;
 
+  /**
+   * Register a back action (ESC on desktop/web, Android back on mobile).
+   * Returns an unsubscribe function.
+   */
+  onBack(cb: () => void): () => void;
+
+  /** Configure back key behavior (web-specific options are best-effort). */
+  setBackKeyOptions(opts: { webConsumeEscapeKey?: boolean }): void;
+
   setEnabled(enabled: boolean): void;
 }

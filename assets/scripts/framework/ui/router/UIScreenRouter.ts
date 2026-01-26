@@ -20,6 +20,7 @@ type StackItem<T extends UIView> = { path: string; view: T };
 export class UIScreenRouter {
   private _screens: StackItem<UIScreen>[] = [];
   private _popups: StackItem<UIPopup>[] = [];
+  private _keepAlive = new Map<string, UIScreen>();
   private _busy = false;
 
   constructor(private _root: IUIHost) {}
@@ -29,12 +30,8 @@ export class UIScreenRouter {
     this._busy = true;
 
     try {
-      const prefab = await this._root._loadPrefab(path);
-      const layer = this._requireLayer(this._root.screensLayer, 'screensLayer');
       const next = await this._withWarmupOverlay(async () => {
-        return this._root._createViewPrepared
-          ? await this._root._createViewPrepared<UIScreen>(prefab, layer, params)
-          : this._root._createView<UIScreen>(prefab, layer, params);
+        return this._getOrCreateScreen(path, params);
       });
 
       const cur = this._topScreen();
@@ -58,7 +55,7 @@ export class UIScreenRouter {
       if (!top) return;
 
       await top.view.hide();
-      top.view.node.destroy();
+      await this._disposeOrCache(top);
 
       const cur = this._topScreen();
       if (cur) await cur.show();
@@ -72,18 +69,14 @@ export class UIScreenRouter {
     this._busy = true;
 
     try {
-      const prefab = await this._root._loadPrefab(path);
-      const layer = this._requireLayer(this._root.screensLayer, 'screensLayer');
       const next = await this._withWarmupOverlay(async () => {
-        return this._root._createViewPrepared
-          ? await this._root._createViewPrepared<UIScreen>(prefab, layer, params)
-          : this._root._createView<UIScreen>(prefab, layer, params);
+        return this._getOrCreateScreen(path, params);
       });
 
       const top = this._screens.pop();
       if (top) {
         await top.view.hide();
-        top.view.node.destroy();
+        await this._disposeOrCache(top);
       }
 
       this._screens.push({ path, view: next });
@@ -136,6 +129,41 @@ export class UIScreenRouter {
     }
   }
 
+
+  /**
+   * Back handler for platforms with a back action (Android back, ESC, browser back, etc).
+   * Priority:
+   * 1) Close top popup if any.
+   * 2) Call current screen.onBackPressed() if it returns true.
+   * 3) Fallback: pop screen if there is a previous screen.
+   */
+  async handleBack(): Promise<boolean> {
+    if (this._busy) return false;
+
+    if (this._popups.length > 0) {
+      await this.popPopup();
+      return true;
+    }
+
+    const top = this._topScreen();
+    if (!top) return false;
+
+    try {
+      const handled = await top.onBackPressed();
+      if (handled) return true;
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn(e);
+    }
+
+    if (this._screens.length > 1) {
+      await this.popScreen();
+      return true;
+    }
+
+    return false;
+  }
+
   dispose(): void {
     // Best-effort cleanup without animations.
     for (const s of this._screens) {
@@ -144,9 +172,100 @@ export class UIScreenRouter {
     for (const p of this._popups) {
       if (p.view.node?.isValid) p.view.node.destroy();
     }
+    for (const [, v] of this._keepAlive) {
+      if (v.node?.isValid) v.node.destroy();
+    }
+    this._keepAlive.clear();
     this._screens.length = 0;
     this._popups.length = 0;
   }
+
+  private async _getOrCreateScreen(path: string, params?: any): Promise<UIScreen> {
+    const cached = this._keepAlive.get(path);
+    if (cached && cached.node && cached.node.isValid) {
+      this._keepAlive.delete(path);
+
+      // Reuse cached screen instance.
+      try {
+        cached.onReuse?.(params);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn(e);
+      }
+
+      // Re-run warmup pipeline for reused screens (optional hooks).
+      const layer = this._requireLayer(this._root.screensLayer, 'screensLayer');
+      const staging = this._root.stagingLayer || this._root.overlayLayer || layer;
+      const hidden = UIWarmup.ensureHiddenOpacity(cached.node);
+      cached.node.active = true;
+      cached.node.setParent(staging);
+
+      if (cached.notifyWarmupStart) {
+        try {
+          cached.notifyWarmupStart();
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.warn(e);
+        }
+      }
+
+      try {
+        await cached.onPreload?.(params);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn(e);
+      }
+
+      try {
+        await cached.onBeforeShow?.(params);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn(e);
+      }
+
+      await UIWarmup.warmup(cached.node, { frames: 2, refreshLayoutTree: true, keepActive: true });
+
+      if (cached.notifyWarmupDone) {
+        try {
+          cached.notifyWarmupDone();
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.warn(e);
+        }
+      }
+
+      cached.node.setParent(layer);
+      cached.node.active = false;
+      hidden.restore();
+
+      return cached;
+    }
+
+    // Create new instance
+    const prefab = await this._root._loadPrefab(path);
+    const layer = this._requireLayer(this._root.screensLayer, 'screensLayer');
+    return this._root._createViewPrepared
+      ? await this._root._createViewPrepared<UIScreen>(prefab, layer, params)
+      : this._root._createView<UIScreen>(prefab, layer, params);
+  }
+
+  private async _disposeOrCache(item: StackItem<UIScreen>): Promise<void> {
+    const view = item.view;
+    if (view.keepAlive && view.node && view.node.isValid) {
+      const prev = this._keepAlive.get(item.path);
+      if (prev && prev !== view && prev.node?.isValid) prev.node.destroy();
+      this._keepAlive.set(item.path, view);
+
+      // Park it under staging/overlay so it's not in active hierarchy.
+      const parking = this._root.stagingLayer || this._root.overlayLayer || this._requireLayer(this._root.screensLayer, 'screensLayer');
+      view.node.setParent(parking);
+      view.node.active = false;
+      return;
+    }
+
+    if (view.node && view.node.isValid) view.node.destroy();
+  }
+
 
 
   private async _withWarmupOverlay<T>(work: () => Promise<T>): Promise<T> {
