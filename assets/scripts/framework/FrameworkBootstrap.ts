@@ -14,6 +14,7 @@ import { NoopAdsService } from './services/impl/NoopAdsService';
 import { NoopAnalyticsService } from './services/impl/NoopAnalyticsService';
 import { NoopAudioService } from './services/impl/NoopAudioService';
 import { NoopPushNotificationService } from './services/impl/NoopPushNotificationService';
+import { UIPrefetcher } from './ui/prefetch/UIPrefetcher';
 import {  SceneMode } from './app/AppConstants';
 
 const { ccclass, property } = _decorator;
@@ -52,6 +53,12 @@ export class FrameworkBootstrap extends Component {
   @property({ tooltip: 'Optional: UI root for router/popups.' })
   uiRoot: Node | null = null;
 
+  @property({ tooltip: 'Enable UI prefetch/warmup via manifest (resources JsonAsset).' })
+  enableUiPrefetch = true;
+
+  @property({ tooltip: "Manifest path under resources (without extension). Example: 'prefetch/ui_prefetch_manifest'" })
+  uiPrefetchManifest = 'prefetch/ui_prefetch_manifest';
+
   onLoad(): void {
     if (this.persistAcrossScenes) {
       director.addPersistRootNode(this.node);
@@ -61,6 +68,13 @@ export class FrameworkBootstrap extends Component {
     ServiceLocator.register(Services.EventBus, new EventBus<any>());
 
     this._registerServices();
+
+    if (this.enableUiPrefetch) {
+      // Run next tick to allow UIRoot to register Services.UI.
+      this.scheduleOnce(() => {
+        void UIPrefetcher.tryRunFromManifest(this.uiPrefetchManifest, { maxFrames: 120, budgetMsPerTick: 6 });
+      }, 0);
+    }
 
     if (this.autoAddAppController) {
       const app = this.getComponent(AppController) ?? this.addComponent(AppController);      

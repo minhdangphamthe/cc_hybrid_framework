@@ -193,3 +193,19 @@ await UIListBuilder.rebuildAsync(container, itemPrefab, data, bindItem, pool, {
 });
 ```
 
+
+
+## UI Prefetch Manifest (smooth heavy/nested UI)
+You can prefetch and warm up screens/items using a manifest JSON under `assets/resources/prefetch/`.
+
+- Manifest: `assets/resources/prefetch/ui_prefetch_manifest.json`
+- Bootstrap fields:
+  - `enableUiPrefetch`
+  - `uiPrefetchManifest` (default: `prefetch/ui_prefetch_manifest`)
+
+Entry types:
+- `view`: calls `IUIService.preloadView()` and optionally `warmupView()`
+- `prefab`: preloads a nested item prefab via `IAssetsService`
+- `spriteframe`: preloads spriteframes/icons used by nested items
+
+Recommended priorities: Home first, Gameplay next, Results last.

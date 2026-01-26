@@ -350,3 +350,32 @@ code {
 .tok-com { color: rgba(167,176,194,0.75); font-style: italic; }
 .tok-fn { color: #f9a8d4; }
 .tok-deco { color: #c4b5fd; }
+
+
+/* Tree code highlighting (framework map) */
+pre code.code-tree .tree-dir {
+  font-weight: 650;
+  color: rgba(230, 233, 242, 0.88);
+}
+
+pre code.code-tree .tree-file {
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.45);
+  padding-bottom: 1px;
+}
+
+pre code.code-tree .tree-class {
+  font-weight: 700;
+  color: var(--accent2);
+}
+
+pre code.code-tree .tree-comment {
+  color: rgba(167, 176, 194, 0.82);
+}
+
+/* Make tree blocks slightly more readable */
+pre:has(code.code-tree) code.code-tree {
+  line-height: 1.55;
+}

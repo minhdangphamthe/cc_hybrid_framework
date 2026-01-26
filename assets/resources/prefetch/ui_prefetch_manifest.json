@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "groups": [
+    {
+      "name": "home",
+      "priority": 0,
+      "entries": [
+        {
+          "type": "view",
+          "path": "ui/screens/HomeScreen",
+          "warmup": true,
+          "priority": 0
+        },
+        {
+          "type": "view",
+          "path": "ui/screens/GameplayScreen",
+          "warmup": false,
+          "priority": 10
+        },
+        {
+          "type": "view",
+          "path": "ui/screens/ResultScreen",
+          "warmup": false,
+          "priority": 20
+        }
+      ]
+    },
+    {
+      "name": "gameplay",
+      "priority": 10,
+      "entries": [
+        {
+          "type": "view",
+          "path": "ui/screens/GameplayScreen",
+          "warmup": true,
+          "priority": 0
+        },
+        {
+          "type": "prefab",
+          "path": "ui/components/ToastView",
+          "priority": 50
+        }
+      ]
+    },
+    {
+      "name": "results",
+      "priority": 20,
+      "entries": [
+        {
+          "type": "view",
+          "path": "ui/screens/ResultScreen",
+          "warmup": true,
+          "priority": 0
+        }
+      ]
+    }
+  ],
+  "notes": "Edit this manifest to add item prefabs / spriteframes for heavy nested UIs."
+}

@@ -206,21 +206,74 @@
     pre.appendChild(btn);
   }
 
-  // Apply TS highlighting + line numbers
+  
+
+  function highlightTree(raw) {
+    // Lightweight tree highlighter for folder/file/class names. Safe: works on plain text only.
+    const lines = raw.split(/\n/);
+    const outLines = [];
+
+    const esc = escapeHtml;
+
+    const fileRe = /([A-Za-z0-9_.-]+\.(ts|js|json|md|prefab|scene))/g;
+    const dirRe = /([A-Za-z0-9_.-]+\/)/g;
+    const classRe = /\b([A-Z][A-Za-z0-9_]{2,})\b/g;
+
+    for (const line of lines) {
+      // Split inline comment
+      const idx = line.indexOf('//');
+      let main = idx >= 0 ? line.slice(0, idx) : line;
+      let com = idx >= 0 ? line.slice(idx) : '';
+
+      let h = esc(main);
+
+      // Highlight dirs first, then files
+      h = h.replace(dirRe, '<span class="tree-dir">$1</span>');
+      h = h.replace(fileRe, '<span class="tree-file">$1</span>');
+
+      // Highlight class-ish tokens (capitalized identifiers) but avoid wrapping inside already wrapped spans by running last on plain text.
+      // This is imperfect but good enough for trees.
+      h = h.replace(classRe, '<span class="tree-class">$1</span>');
+
+      if (com) {
+        h += '<span class="tree-comment">' + esc(com) + '</span>';
+      }
+
+      outLines.push(h);
+    }
+
+    return outLines.join('\n');
+  }
+// Apply TS highlighting + line numbers
   document.querySelectorAll('pre > code.language-ts').forEach((codeEl) => {
     const pre = codeEl.parentElement;
+    if (!pre || pre.dataset.hfCodeDone === '1') return;
     const raw = codeEl.textContent || '';
     codeEl.innerHTML = highlightTs(raw);
     addLineNumbers(pre, raw);
     installCopyButton(pre, codeEl);
+    pre.dataset.hfCodeDone = '1';
   });
 
-  // ---------- Keyword/term highlighting in descriptions ----------
+  
+  // Apply tree highlighting + line numbers
+  document.querySelectorAll('pre > code.code-tree').forEach((codeEl) => {
+    const pre = codeEl.parentElement;
+    if (!pre || pre.dataset.hfCodeDone === '1') return;
+    const raw = codeEl.textContent || '';
+    codeEl.innerHTML = highlightTree(raw);
+    addLineNumbers(pre, raw);
+    installCopyButton(pre, codeEl);
+    pre.dataset.hfCodeDone = '1';
+  });
+
+// ---------- Keyword/term highlighting in descriptions ----------
 
   const TERMS = [
     'ServiceLocator', 'EventBus', 'FSM', 'MVVM-lite', 'AppController', 'FrameworkBootstrap',
     'ISceneService', 'Persist Root Node', 'single-scene', 'multi-scene', 'preloadScene', 'loadScene',
-    'pooling', 'NodePool', 'IPoolable', 'preload'
+    'pooling', 'NodePool', 'IPoolable', 'preload',
+    'UIRoot', 'UIView', 'UIScreen', 'UIPopup', 'UIScreenRouter', 'Binder', 'ObservableValue', 'ViewModel', 'IUIService', 'IAssetsService', 'UIPrefetchManifest', 'UIPrefetcher', 'warmupView', 'preloadView', 'stagingLayer', 'StagingLayer', 'UIListBuilder', 'UIWarmup'
   ];
 
   // Build one regex, longer terms first

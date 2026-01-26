@@ -3,8 +3,371 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hybrid Framework Playbook - Single-scene vs Multi-scene</title>
-  <link rel="stylesheet" href="playbook.css" />
+  <title>Hybrid Framework Playbook - Framework Map + Scene Modes</title>
+  <style>
+
+    :root {
+      --bg: #0b1020;
+      --panel: #101a33;
+      --text: #e6e9f2;
+      --muted: #a7b0c2;
+      --line: rgba(255,255,255,0.08);
+      --accent: #7dd3fc;
+      --accent2: #a78bfa;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --codebg: rgba(0,0,0,0.25);
+      --shadow: 0 10px 40px rgba(0,0,0,0.35);
+      --radius: 14px;
+      --radius2: 18px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 10% 10%, rgba(167,139,250,0.22), transparent 50%),
+                  radial-gradient(1200px 800px at 80% 0%, rgba(125,211,252,0.18), transparent 55%),
+                  radial-gradient(900px 700px at 70% 90%, rgba(52,211,153,0.10), transparent 55%),
+                  var(--bg);
+    }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 10% 10%, rgba(167,139,250,0.22), transparent 50%),
+                  radial-gradient(1200px 800px at 80% 0%, rgba(125,211,252,0.18), transparent 55%),
+                  radial-gradient(900px 700px at 70% 90%, rgba(52,211,153,0.10), transparent 55%),
+                  var(--bg);
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 0;
+      width: 100vw;
+      height: 100vh;
+      padding: 0;
+      margin: 0;
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
+      .sidebar { position: relative !important; height: auto !important; border-right: none; border-bottom: 1px solid var(--line); }
+      .main { height: auto; min-height: 60vh; border-left: none; }
+    }
+      .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border-right: 1px solid var(--line);
+      border-radius: 0;
+      box-shadow: none;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 18px;
+      height: calc(100vh - 36px);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .side-head {
+      padding: 16px 16px 10px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), transparent);
+    }
+
+    .brand {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      font-size: 14px;
+    }
+
+    .pill {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+    }
+
+    .search { margin-top: 10px; display: flex; gap: 10px; align-items: center; }
+    .search input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.20);
+      color: var(--text);
+      outline: none;
+      font-size: 13px;
+    }
+    .search input::placeholder { color: rgba(231,236,247,0.55); }
+
+    .nav { padding: 10px 10px 14px; overflow: auto; }
+    .nav a {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 12px;
+      color: var(--text);
+      border: 1px solid transparent;
+    }
+    .nav a:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: var(--line);
+      text-decoration: none;
+    }
+    .nav small {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+      line-height: 1.25;
+    }
+
+    .main {
+      height: 100vh;
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      border-left: 1px solid var(--line);
+      border-radius: 0;
+      box-shadow: none;
+      overflow: auto;
+      padding: 26px 26px 90px;
+    }
+
+    h1 { font-size: 28px; margin: 0 0 6px; }
+    .subtitle { color: var(--muted); margin: 0 0 18px; line-height: 1.5; }
+
+    h2 { font-size: 18px; margin-top: 28px; }
+    h3 { font-size: 15px; margin-top: 18px; }
+    p { color: var(--text); line-height: 1.65; margin: 10px 0; }
+    ul { margin: 8px 0 8px 18px; color: var(--text); line-height: 1.65; }
+    li { margin: 6px 0; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: rgba(0,0,0,0.18);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .tag {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    .tag.good { color: var(--good); }
+    .tag.warn { color: var(--warn); }
+    .tag.bad { color: var(--bad); }
+
+    .mode {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      align-items: center;
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .mode label {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.15);
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text);
+      user-select: none;
+    }
+    .mode input { accent-color: var(--accent); }
+
+    .callout {
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.18);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin: 12px 0;
+    }
+    .callout .title { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 6px; }
+    .callout .title .dot {
+      width: 10px; height: 10px; border-radius: 99px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(125,211,252,0.15);
+    }
+    .callout.good .title .dot { background: var(--good); box-shadow: 0 0 0 4px rgba(52,211,153,0.16); }
+    .callout.warn .title .dot { background: var(--warn); box-shadow: 0 0 0 4px rgba(251,191,36,0.18); }
+    .callout.bad  .title .dot { background: var(--bad);  box-shadow: 0 0 0 4px rgba(251,113,133,0.18); }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(0,0,0,0.15);
+      padding: 10px 12px;
+      margin: 10px 0;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--text);
+      list-style: none;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary:after {
+      content: '>';
+      float: right;
+      color: var(--muted);
+      transform: rotate(0deg);
+      transition: transform 160ms ease;
+    }
+    details[open] summary:after { transform: rotate(90deg); }
+
+    pre {
+      position: relative;
+      margin: 10px 0;
+      padding: 12px 12px 12px;
+      border-radius: 12px;
+      background: var(--codebg);
+      border: 1px solid var(--line);
+      overflow: auto;
+    }
+    code { font-family: var(--mono); font-size: 12.5px; line-height: 1.55; color: #f1f5ff; }
+    .copy {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.35);
+      color: var(--text);
+      padding: 6px 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .copy:hover { background: rgba(255,255,255,0.06); }
+    .copy:active { transform: translateY(1px); }
+
+    .two-col { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 14px; align-items: start; }
+    @media (max-width: 980px) { .two-col { grid-template-columns: 1fr; } }
+
+    .diagram {
+      width: 100%;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.12);
+      padding: 10px;
+    }
+
+    .kbd {
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.25);
+      color: var(--muted);
+    }
+
+    .mode-only { display: none; }
+    .mode-single .show-single { display: block; }
+    .mode-multi .show-multi { display: block; }
+
+    .markdown {
+      white-space: pre-wrap;
+      font-family: var(--font);
+      line-height: 1.6;
+      color: var(--text);
+    }
+    .markdown h4 { margin: 8px 0 6px; }
+  
+
+    /* --- TypeScript syntax highlighting (lightweight, no deps) --- */
+    .tok-kw { color: var(--accent); }
+    .tok-ty { color: var(--accent2); }
+    .tok-str { color: #86efac; }
+    .tok-num { color: #fde68a; }
+    .tok-com { color: rgba(167,176,194,0.75); font-style: italic; }
+    .tok-fn { color: #f9a8d4; }
+    .tok-deco { color: #c4b5fd; }
+    .tok-op { color: rgba(230,233,242,0.75); }
+
+    pre { padding-left: 46px; }
+    .gutter {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      bottom: 12px;
+      width: 26px;
+      border-right: 1px solid var(--line);
+      color: rgba(167,176,194,0.55);
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.55;
+      text-align: right;
+      padding-right: 8px;
+      user-select: none;
+      overflow: hidden;
+    }
+    .gutter div { height: 1.55em; }
+
+    .inline-code {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.20);
+      color: rgba(230,233,242,0.92);
+      white-space: nowrap;
+    }
+    .hl-term {
+      border-bottom: 1px dashed rgba(125,211,252,0.55);
+      padding: 0 2px;
+      border-radius: 6px;
+      background: rgba(125,211,252,0.10);
+    }
+
+
+  </style>
 </head>
 <body>
   <div class="layout">
@@ -20,14 +383,15 @@
       </div>
       <nav class="nav" id="nav">
         <a href="#start" data-text="overview goals architecture"><strong>1) Getting started</strong><small>What this is and how to use it</small></a>
-        <a href="#choose" data-text="choose mode single multi"><strong>2) Choose a mode</strong><small>When to use single vs multi</small></a>
-        <a href="#single" data-text="single scene guide"><strong>3) Single-scene</strong><small>Flow, hierarchy, feature toggles</small></a>
-        <a href="#multi" data-text="multi scene guide persist loadscene"><strong>4) Multi-scene</strong><small>Persistent core + scene loading</small></a>
-        <a href="#unity" data-text="unity scenes additive"><strong>5) Unity habits</strong><small>What Unity teams usually do</small></a>
-        <a href="#guardrails" data-text="guardrails conventions"><strong>6) Guardrails</strong><small>Rules that keep codebase healthy</small></a>
-        <a href="#coding" data-text="coding standard formatting naming"><strong>7) Coding standard</strong><small>Formatting + naming conventions</small></a>
-        <a href="#examples" data-text="code examples bootstrap appcontroller"><strong>8) Code examples</strong><small>Copy/paste friendly snippets</small></a>
-        <a href="#checklist" data-text="shipping checklist"><strong>9) Shipping checklist</strong><small>Before you ship a build</small></a>
+        <a href="#tree" data-text="framework tree hierarchy map folders modules services ui mvvm router prefetch warmup"><strong>3) Framework map</strong><small>Code layout + runtime hierarchy</small></a>
+        <a href="#choose" data-text="choose mode single multi"><strong>3) Choose a mode</strong><small>When to use single vs multi</small></a>
+        <a href="#single" data-text="single scene guide"><strong>4) Single-scene</strong><small>Flow, hierarchy, feature toggles</small></a>
+        <a href="#multi" data-text="multi scene guide persist loadscene"><strong>5) Multi-scene</strong><small>Persistent core + scene loading</small></a>
+        <a href="#unity" data-text="unity scenes additive"><strong>6) Unity habits</strong><small>What Unity teams usually do</small></a>
+        <a href="#guardrails" data-text="guardrails conventions"><strong>7) Guardrails</strong><small>Rules that keep codebase healthy</small></a>
+        <a href="#coding" data-text="coding standard formatting naming"><strong>8) Coding standard</strong><small>Formatting + naming conventions</small></a>
+        <a href="#examples" data-text="code examples bootstrap appcontroller"><strong>9) Code examples</strong><small>Copy/paste friendly snippets</small></a>
+        <a href="#checklist" data-text="shipping checklist"><strong>10) Shipping checklist</strong><small>Before you ship a build</small></a>
       </nav>
     </aside>
 
@@ -108,9 +472,166 @@
           </div>
         </div>
       </section>
+      <section id="tree">
+        <h2>2) Framework map</h2>
+        <p>
+          This section visualizes the Hybrid Framework as a <span class="hl-term">tree</span> so you can quickly see:
+          (1) where to put new code, (2) what depends on what, and (3) the runtime node hierarchy in <span class="hl-term">SceneMode.Single</span>.
+        </p>
+
+        <div class="grid">
+          <div class="card">
+            <h3>Code layout tree</h3>
+            <p class="subtitle" style="margin: 6px 0 10px;">
+              Target: keep <span class="hl-term">framework</span> reusable and <span class="hl-term">game</span> feature code isolated.
+            </p>
+            <pre><code class="code-tree" data-tree="layout">assets/scripts
+- framework/
+  - FrameworkBootstrap.ts
+  - app/
+    - AppController.ts            // App FSM (Home -> Gameplay -> Result)
+    - AppEvents.ts                // Typed event map
+    - AppConstants.ts             // AppEvent + SceneMode enums
+  - core/
+    - ServiceLocator.ts           // Global service registry
+    - EventBus.ts                 // Typed event bus
+    - Lifetime.ts                 // Subscription/cleanup helper
+    - Disposable.ts               // Disposable primitives
+  - services/
+    - ServiceTokens.ts            // Typed service keys (Services.Assets, Services.UI, ...)
+    - interfaces/
+      - IAssetsService.ts
+      - IUIService.ts
+      - ISceneService.ts
+      - IAdsService.ts
+      - IAnalyticsService.ts
+      - IPushNotificationService.ts
+      - ... (save/audio/network/time/input as needed)
+    - impl/
+      - CocosAssetsService.ts
+      - CocosSceneService.ts
+      - NoopAdsService.ts
+      - NoopAnalyticsService.ts
+      - NoopPushNotificationService.ts
+      - ... (engine adapters)
+  - ui/
+    - UIView.ts                   // lifecycle + optional warmup hooks
+    - UIScreen.ts                 // marker type for full-page views
+    - UIPopup.ts                  // marker type for stacked popups
+    - UIRoot.ts                   // layers + router host
+    - router/
+      - UIScreenRouter.ts         // open/replace screens
+    - mvvm/
+      - ViewModel.ts              // base VM + lifetime
+      - ObservableValue.ts        // minimal reactive value
+      - Binder.ts                 // binds VM -> view (auto dispose)
+    - prefetch/
+      - UIPrefetchManifest.ts     // manifest types
+      - UIPrefetcher.ts           // reads manifest and warms up assets
+    - utils/
+      - UIWarmup.ts               // layout/widget warmup helpers
+      - UIListBuilder.ts          // chunked list build (avoid micro-glitch)
+- game/
+  - bootstrap/
+    - GameEntry.ts                // connect App events -> open screens
+  - shared/
+    - GameSessionVM.ts            // shared VM state
+  - features/
+    - home/
+      - HomeVM.ts
+      - HomeScreen.ts
+      - HomeBinder.ts
+    - gameplay/
+      - GameplayVM.ts
+      - GameplayScreen.ts
+      - GameplayBinder.ts
+    - results/
+      - ResultVM.ts
+      - ResultScreen.ts
+      - ResultBinder.ts</code></pre>
+          </div>
+
+          <div class="card">
+            <h3>Runtime node hierarchy tree</h3>
+            <p class="subtitle" style="margin: 6px 0 10px;">
+              One active scene. One <span class="hl-term">UIRoot</span>. One <span class="hl-term">AppController</span>.
+            </p>
+            <pre><code class="code-tree" data-tree="runtime">MainScene
+- Framework (Persist Root Node)
+  - FrameworkBootstrap
+  - AppController
+- Canvas
+  - UI Camera
+  - UIRoot (UIRoot.ts)
+    - StagingLayer   // offscreen warmup (opacity 0)
+    - ScreensLayer   // full-page screens
+    - PopupsLayer    // modal stack
+    - OverlayLayer   // loading / blockers
+    - ToastLayer     // ephemeral toasts
+- FeatureRoot (optional)
+  - GameplayRoot (world)
+  - VFXRoot
+  - AudioRoot</code></pre>
+
+            <div class="callout warn">
+              <div class="title"><span class="dot"></span>Rule</div>
+              <div>
+                Do not keep two <span class="inline-code">UIRoot</span> instances alive. Services.UI must be registered once.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <details>
+          <summary>Dependency direction (how to keep it clean)</summary>
+          <div class="grid">
+            <div class="card">
+              <h3>Allowed direction</h3>
+              <pre><code class="language-ts">game/features
+  -> framework/ui (MVVM-lite + router)
+  -> framework/app (AppController events)
+  -> framework/services/interfaces
+  -> framework/core</code></pre>
+            </div>
+            <div class="card">
+              <h3>Disallowed direction</h3>
+              <pre><code class="language-ts">framework/services/impl
+  -> game/*      // ❌ do not import game code into services
+framework/core
+  -> game/*      // ❌ keep core engine-agnostic</code></pre>
+              <p class="subtitle" style="margin-top: 10px;">
+                Keep the framework reusable across multiple projects. Game code can depend on the framework, not the other way around.
+              </p>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>UI opening pipeline (preload → warmup → show)</summary>
+          <pre><code class="code-tree" data-tree="pipeline">UIScreenRouter.replaceScreen('ui/screens/GameplayScreen')
+  -> IUIService.preloadView(path)                   // cache prefab
+  -> IUIService.warmupView(path, params) (optional) // run view hooks offscreen
+  -> UIRoot._createViewPrepared()
+       - instantiate under StagingLayer (hidden)
+       - view.onCreate()
+       - await view.onPreload()       // preload nested prefabs/icons
+       - await view.onBeforeShow()    // build lists (chunked)
+       - warmup Layout/Widget + yield frames
+       - move to ScreensLayer
+  -> view.show()</code></pre>
+
+          <div class="callout good">
+            <div class="title"><span class="dot"></span>Why this works</div>
+            <div>
+              Heavy nested UI is rendered offscreen first, so the user never sees partial layouts or micro-glitches.
+            </div>
+          </div>
+        </details>
+      </section>
+
 
       <section id="choose">
-        <h2>2) Choose a mode</h2>
+        <h2>3) Choose a mode</h2>
         <div class="grid">
           <div class="card">
             <h3>Single-scene</h3>
@@ -146,7 +667,7 @@
       </section>
 
       <section id="single" class="mode-only show-single">
-        <h2>3) Single-scene guide</h2>
+        <h2>4) Single-scene guide</h2>
         <p>
           A single scene (e.g. <b>Main</b>) contains Home UI, gameplay objects, and result popups.
           AppFlow transitions are implemented by <b>enabling/disabling feature root nodes</b>.
@@ -165,7 +686,7 @@
           <div class="grid">
             <div class="card">
               <strong>Hierarchy</strong>
-              <pre><code class="language-ts">MainScene
+              <pre><code class="code-tree" data-tree="runtime">MainScene
 -  Framework (persistent)
     -  FrameworkBootstrap
     -  AppController
@@ -188,7 +709,7 @@
       </section>
 
       <section id="multi" class="mode-only show-multi">
-        <h2>4) Multi-scene guide</h2>
+        <h2>5) Multi-scene guide</h2>
         <p>
           Multi-scene splits your game into scenes: <b>Boot</b>, <b>Home</b>, <b>Gameplay</b>, (optional) <b>Result</b>.
           The core (Bootstrap + services + AppController) stays on a persistent node.
@@ -222,7 +743,7 @@
       </section>
 
       <section id="unity">
-        <h2>5) Unity habits</h2>
+        <h2>6) Unity habits</h2>
         <div class="grid">
           <div class="card">
             <h3>What Unity teams often do</h3>
@@ -244,7 +765,7 @@
       </section>
 
       <section id="guardrails">
-        <h2>6) Guardrails</h2>
+        <h2>7) Guardrails</h2>
         <div class="grid">
           <div class="card">
             <h3>Gameplay must not call UI directly</h3>
@@ -266,91 +787,66 @@
       </section>
 
       <section id="coding">
-        <h2>7) Coding standard</h2>
-        <div class="grid">
-          <div class="card">
-            <h3>Formatting</h3>
-            <ul>
-              <li>Indentation: <b>2 spaces</b>, no tabs.</li>
-              <li>Quotes: <b>single quotes</b> for strings.</li>
-              <li>Semicolons: <b>required</b>.</li>
-              <li>Spacing:
-                <ul>
-                  <li><span class="kbd">if (cond) { ... }</span> (space after keywords, space before <span class="kbd">{</span>)</li>
-                  <li><span class="kbd">{ a: 1, b: 2 }</span> (spaces inside object braces)</li>
-                  <li><span class="kbd">fn(a, b)</span> (space after commas)</li>
-                </ul>
-              </li>
-              <li>Trailing commas: <b>recommended</b> for multi-line objects/arrays.</li>
-            </ul>
-          </div>
+        <h2>8) Coding standard</h2>
+        <div class="card">
+          <div class="markdown">## Coding standard (project-wide)
 
-          <div class="card">
-            <h3>Naming</h3>
-            <ul>
-              <li>Files:
-                <ul>
-                  <li>Components / Services: <span class="kbd">PascalCase.ts</span> (e.g. <span class="kbd">AppController.ts</span>).</li>
-                  <li>Interfaces: <span class="kbd">IThing.ts</span> (e.g. <span class="kbd">IAudioService.ts</span>).</li>
-                </ul>
-              </li>
-              <li>Types/classes/enums: <span class="kbd">PascalCase</span>.</li>
-              <li>Methods/functions/variables: <span class="kbd">camelCase</span>.</li>
-              <li>Private fields: <span class="kbd">private _likeThis</span> (leading underscore).</li>
-              <li>Public fields: no underscore.</li>
-              <li>Constants: <span class="kbd">UPPER_SNAKE_CASE</span> (rare; prefer <span class="kbd">const</span> at module scope when needed).</li>
-            </ul>
-          </div>
-        </div>
+Formatting
+- Indentation: **2 spaces**, no tabs.
+- Quotes: **single quotes** for strings.
+- Semicolons: **required**.
+- Spacing:
+  - `if (cond) { ... }` (space after keywords, space before `{`)
+  - `{ a: 1, b: 2 }` (spaces inside object braces)
+  - `fn(a, b)` (space after commas)
+- Trailing commas: **recommended** for multi-line objects/arrays.
 
-        <div class="card" style="margin-top: 14px;">
-          <h3>Comments</h3>
-          <ul>
-            <li>English only.</li>
-            <li>Explain <b>why</b> (intent/constraints), not the obvious “what”.</li>
-          </ul>
+Naming
+- Files:
+  - Components / Services: `PascalCase.ts` (e.g. `AppController.ts`).
+  - Interfaces: `IThing.ts` (e.g. `IAudioService.ts`).
+- Types/classes/enums: `PascalCase`.
+- Methods/functions/variables: `camelCase`.
+- Private fields: `private _likeThis` (leading underscore).
+- Public fields: no underscore.
+- Constants: `UPPER_SNAKE_CASE` (rare; prefer `const` at module scope when needed).
+
+Comments
+- English only.
+- Explain **why** (intent/constraints), not the obvious &quot;what&quot;.
+</div>
         </div>
       </section>
 
       <section id="examples">
-        <h2>8) Code examples</h2>
+        <h2>9) Code examples</h2>
 
         <details open>
           <summary>FrameworkBootstrap (v0.1.2) - persistent core + auto AppController</summary>
-          <pre><code class="language-ts">import { _decorator, Component, director, Enum } from 'cc';
+          <pre><code class="language-ts">import { _decorator, Component, director } from 'cc';
 import { ServiceLocator } from './core/ServiceLocator';
 import { EventBus } from './core/EventBus';
 import { Services } from './services/ServiceTokens';
 import { CocosSceneService } from './services/impl/CocosSceneService';
 import { AppController } from './app/AppController';
-import { AppSceneModeEditor, appSceneModeNameFromEditor } from './app/AppConstants';
-
-const { ccclass, property } = _decorator;
 
 @ccclass('FrameworkBootstrap')
 export class FrameworkBootstrap extends Component {
   persistAcrossScenes = true;
   autoAddAppController = true;
-
-  @property({
-    type: Enum(AppSceneModeEditor),
-    tooltip: 'App mode: Single uses one scene; Multi loads scenes via ISceneService.',
-  })
-  sceneMode = AppSceneModeEditor.Single;
+  sceneMode: 'single' | 'multi' = 'single';
 
   onLoad(): void {
     if (this.persistAcrossScenes) {
       director.addPersistRootNode(this.node);
     }
 
-    // Use Services tokens instead of magic strings
-    ServiceLocator.register(Services.EventBus, new EventBus&lt;any&gt;());
+    ServiceLocator.register('EventBus', new EventBus&lt;any&gt;());
     ServiceLocator.register(Services.Scene, new CocosSceneService());
 
     if (this.autoAddAppController) {
       const app = this.getComponent(AppController) ?? this.addComponent(AppController);
-      const mode = appSceneModeNameFromEditor(this.sceneMode);
-      app.configure({ mode });
+      app.configure({ mode: this.sceneMode });
     }
   }
 }</code></pre>
@@ -361,22 +857,18 @@ export class FrameworkBootstrap extends Component {
           <pre><code class="language-ts">import { _decorator, Component } from 'cc';
 import { ServiceLocator } from '../framework/core/ServiceLocator';
 import { EventBus } from '../framework/core/EventBus';
-import { Services } from '../framework/services/ServiceTokens';
 import { AppEvents } from '../framework/app/AppEvents';
-import { AppEvent } from '../framework/app/AppConstants';
-
-const { ccclass } = _decorator;
 
 @ccclass('HomeView')
 export class HomeView extends Component {
   private _bus!: EventBus&lt;AppEvents&gt;;
 
   onLoad(): void {
-    this._bus = ServiceLocator.resolve&lt;EventBus&lt;AppEvents&gt;&gt;(Services.EventBus);
+    this._bus = ServiceLocator.resolve('EventBus');
   }
 
   onClickPlay(): void {
-    this._bus.emit(AppEvent.Play, {});
+    this._bus.emit('app/play', {});
   }
 }</code></pre>
         </details>
@@ -386,33 +878,29 @@ export class HomeView extends Component {
           <pre><code class="language-ts">import { _decorator, Component } from 'cc';
 import { ServiceLocator } from '../framework/core/ServiceLocator';
 import { EventBus } from '../framework/core/EventBus';
-import { Services } from '../framework/services/ServiceTokens';
 import { AppEvents } from '../framework/app/AppEvents';
-import { AppEvent } from '../framework/app/AppConstants';
-
-const { ccclass } = _decorator;
 
 @ccclass('GameplayController')
 export class GameplayController extends Component {
   private _bus!: EventBus&lt;AppEvents&gt;;
 
   onLoad(): void {
-    this._bus = ServiceLocator.resolve&lt;EventBus&lt;AppEvents&gt;&gt;(Services.EventBus);
+    this._bus = ServiceLocator.resolve('EventBus');
   }
 
   onUserDie(): void {
-    this._bus.emit(AppEvent.Restart, {});
+    this._bus.emit('app/restart', {});
   }
 
   onUserBackHome(): void {
-    this._bus.emit(AppEvent.BackToHome, {});
+    this._bus.emit('app/backToHome', {});
   }
 }</code></pre>
         </details>
       </section>
 
       <section id="checklist">
-        <h2>9) Shipping checklist</h2>
+        <h2>10) Shipping checklist</h2>
         <div class="grid">
           <div class="card">
             <h3>Performance</h3>
@@ -451,8 +939,6 @@ export class GameplayController extends Component {
   </div>
 
   
-  
-
   <script src="playbook.js"></script>
-</body>
+  </body>
 </html>
