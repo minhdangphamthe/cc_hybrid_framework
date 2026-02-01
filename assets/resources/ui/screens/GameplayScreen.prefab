@@ -1637,7 +1637,7 @@
       "__id__": 63
     },
     "transition": "scaleFade",
-    "keepAlive": false,
+    "keepAlive": true,
     "blockInputUntilWarmupDone": true,
     "scoreLabel": {
       "__id__": 11

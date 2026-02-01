@@ -1271,7 +1271,7 @@
       "__id__": 49
     },
     "transition": "fade",
-    "keepAlive": false,
+    "keepAlive": true,
     "blockInputUntilWarmupDone": true,
     "titleLabel": {
       "__id__": 11

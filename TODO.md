@@ -2,6 +2,8 @@
 - Prefetch với tùy chọn Loading UI từ game
 - Hướng dẫn prefetch nested UI với leaderboard, character/skill list trong Gameplay screen (https://chatgpt.com/share/6972df8e-2fd8-8008-90fb-e196dc29adee)
 - Cách dùng dùng rebuildAsync cho heavy UI
+- _runEntry sao không thấy trả về để access về sau
+- _withWarmupOverlay remove hard-coded
 
 # Line-up
 - [Core-1] UI Collection 2D Templates https://chatgpt.com/share/697c5b9a-0468-8008-93c2-a69b078e6544

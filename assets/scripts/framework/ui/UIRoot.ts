@@ -26,6 +26,12 @@ export class UIRoot extends Component implements IUIService, IUIHost {
   @property(Node)
   overlayLayer: Node | null = null;
 
+  @property({ type: Prefab, tooltip: 'Optional custom loading overlay prefab (root component name below).' })
+  loadingOverlayPrefab: Prefab | null = null;
+
+  @property({ tooltip: 'Optional component name on the overlay root node that implements show/hide/setMessage.' })
+  loadingOverlayComponent = '';
+
   @property(Node)
   stagingLayer: Node | null = null;
 
@@ -50,9 +56,13 @@ export class UIRoot extends Component implements IUIService, IUIHost {
 
     ServiceLocator.register(Services.UI, this as unknown as IUIService);
 
-    // Optional: a small loading overlay to mask heavy UI warmup.
-    this._loading = new UILoadingOverlayService(this.overlayLayer ?? this.node);
-    ServiceLocator.register(Services.LoadingOverlay, this._loading);
+    // Optional: a loading overlay to mask heavy UI warmup.
+    const loading = new UILoadingOverlayService(this.overlayLayer ?? this.node);
+    if (this.loadingOverlayPrefab) {
+      loading.setCustomPrefab(this.loadingOverlayPrefab, this.loadingOverlayComponent);
+    }
+    this._loading = loading;
+    ServiceLocator.register(Services.LoadingOverlay, loading);
 
   }
 
