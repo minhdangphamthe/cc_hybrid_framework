@@ -23,7 +23,7 @@ export class UIScreenRouter {
   private _keepAlive = new Map<string, UIScreen>();
   private _busy = false;
 
-  constructor(private _root: IUIHost) {}
+  constructor(private _root: IUIHost) { }
 
   async pushScreen(path: string, params?: any): Promise<UIScreen> {
     if (this._busy) throw new Error('[UIScreenRouter] Busy');
@@ -129,7 +129,6 @@ export class UIScreenRouter {
     }
   }
 
-
   /**
    * Back handler for platforms with a back action (Android back, ESC, browser back, etc).
    * Priority:
@@ -182,57 +181,23 @@ export class UIScreenRouter {
 
   private async _getOrCreateScreen(path: string, params?: any): Promise<UIScreen> {
     const cached = this._keepAlive.get(path);
-    if (cached && cached.node && cached.node.isValid) {
+    if (cached?.node?.isValid) {
       this._keepAlive.delete(path);
 
-      // Reuse cached screen instance.
-      try {
-        cached.onReuse?.(params);
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn(e);
-      }
+      cached.onReuse?.(params);
 
-      // Re-run warmup pipeline for reused screens (optional hooks).
       const layer = this._requireLayer(this._root.screensLayer, 'screensLayer');
       const staging = this._root.stagingLayer || this._root.overlayLayer || layer;
       const hidden = UIWarmup.ensureHiddenOpacity(cached.node);
+
       cached.node.active = true;
       cached.node.setParent(staging);
 
-      if (cached.notifyWarmupStart) {
-        try {
-          cached.notifyWarmupStart();
-        } catch (e) {
-          // eslint-disable-next-line no-console
-          console.warn(e);
-        }
-      }
-
-      try {
-        await cached.onPreload?.(params);
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn(e);
-      }
-
-      try {
-        await cached.onBeforeShow?.(params);
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn(e);
-      }
-
+      cached.notifyWarmupStart?.();
+      await cached.onPreload?.(params);
+      await cached.onBeforeShow?.(params);
       await UIWarmup.warmup(cached.node, { frames: 2, refreshLayoutTree: true, keepActive: true });
-
-      if (cached.notifyWarmupDone) {
-        try {
-          cached.notifyWarmupDone();
-        } catch (e) {
-          // eslint-disable-next-line no-console
-          console.warn(e);
-        }
-      }
+      cached.notifyWarmupDone?.();
 
       cached.node.setParent(layer);
       cached.node.active = false;
@@ -247,6 +212,7 @@ export class UIScreenRouter {
     return this._root._createViewPrepared
       ? await this._root._createViewPrepared<UIScreen>(prefab, layer, params)
       : this._root._createView<UIScreen>(prefab, layer, params);
+
   }
 
   private async _disposeOrCache(item: StackItem<UIScreen>): Promise<void> {
@@ -266,8 +232,6 @@ export class UIScreenRouter {
     if (view.node && view.node.isValid) view.node.destroy();
   }
 
-
-
   private async _withWarmupOverlay<T>(work: () => Promise<T>): Promise<T> {
     const loading = ServiceLocator.tryResolve<ILoadingOverlayService>(Services.LoadingOverlay);
     if (!loading) return work();
@@ -281,7 +245,7 @@ export class UIScreenRouter {
     void (async () => {
       await UIWarmup.delayMs(delayMs);
       if (done) return;
-      handle = loading.show({ blockInput: true, minDurationMs });
+      handle = loading.show({ minDurationMs });
     })();
 
     try {

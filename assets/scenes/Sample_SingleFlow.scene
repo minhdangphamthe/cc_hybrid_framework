@@ -422,7 +422,7 @@
     "propertyPath": [
       "loadingOverlayComponent"
     ],
-    "value": ""
+    "value": "LoadingOverlayView"
   },
   {
     "__type__": "cc.TargetInfo",
