@@ -4,6 +4,7 @@
 - Cách dùng dùng rebuildAsync cho heavy UI
 - _runEntry sao không thấy trả về để access về sau
 - _withWarmupOverlay remove hard-coded
+- Các loại transition cho screen: flying, rotating, shader effect?
 
 # Line-up
 - [Core-1] UI Collection 2D Templates https://chatgpt.com/share/697c5b9a-0468-8008-93c2-a69b078e6544

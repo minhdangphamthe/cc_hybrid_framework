@@ -17,26 +17,31 @@ const { ccclass, property } = _decorator;
 
 @ccclass('UIRoot')
 export class UIRoot extends Component implements IUIService, IUIHost {
-  @property(Node)
+  @property({ group: { id: 'LAYERS', name: 'Layers', style: 'section' } })
   screensLayer: Node | null = null;
 
-  @property(Node)
+  @property({ group: { id: 'LAYERS', name: 'Layers', style: 'section' } })
   popupsLayer: Node | null = null;
 
-  @property(Node)
+  @property({ group: { id: 'LAYERS', name: 'Layers', style: 'section' } })
   overlayLayer: Node | null = null;
+
+  @property({ group: { id: 'LAYERS', name: 'Layers', style: 'section' } })
+  stagingLayer: Node | null = null;
+
+  @property({ group: { id: 'LAYERS', name: 'Layers', style: 'section' } })
+  toastLayer: Node | null = null;
 
   @property({ type: Prefab, tooltip: 'Optional custom loading overlay prefab (root component name below).' })
   loadingOverlayPrefab: Prefab | null = null;
 
-  @property({ tooltip: 'Optional component name on the overlay root node that implements show/hide/setMessage.' })
+  @property({
+    tooltip: 'Optional component name on the overlay root node that implements show/hide/setMessage.',
+    visible() {
+      return this.loadingOverlayPrefab !== null;
+    }
+  })
   loadingOverlayComponent = '';
-
-  @property(Node)
-  stagingLayer: Node | null = null;
-
-  @property(Node)
-  toastLayer: Node | null = null;
 
   router!: UIScreenRouter;
   toast!: ToastManager;
@@ -63,7 +68,6 @@ export class UIRoot extends Component implements IUIService, IUIHost {
     }
     this._loading = loading;
     ServiceLocator.register(Services.LoadingOverlay, loading);
-
   }
 
   onDestroy(): void {
@@ -152,66 +156,31 @@ export class UIRoot extends Component implements IUIService, IUIHost {
    */
   async _createViewPrepared<T extends UIView>(prefab: Prefab, parent: Node, params?: any): Promise<T> {
     const staging = this.stagingLayer ?? parent;
-
     const node = instantiate(prefab);
-    node.active = true;
-    node.setParent(staging);
-
+    
     // Hide before any frame can render.
     const hidden = UIWarmup.ensureHiddenOpacity(node);
-
-    const view = node.getComponent(UIView) as unknown as T;
+    node.active = true;
+    node.setParent(staging);
+    const view = node.getComponent(UIView) as (T & Partial<UIScreen>) | null;
     if (!view) throw new Error(`[UIRoot] Prefab must have a UIView component: ${prefab.name}`);
 
-    // Screen warmup notifications (input blocking for heavy UI).
-    if ((view as unknown as UIScreen).notifyWarmupStart) {
-      try {
-        (view as unknown as UIScreen).notifyWarmupStart();
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn(e);
-      }
-    }
-
     try {
+      view.notifyWarmupStart?.();
       view.onCreate?.(params);
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.warn(e);
-    }
-
-    try {
       await view.onPreload?.(params);
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.warn(e);
-    }
-
-    try {
       await view.onBeforeShow?.(params);
+      await UIWarmup.warmup(node, { frames: 2, refreshLayoutTree: true, keepActive: true });
+      view.notifyWarmupDone?.();
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.warn(e);
-    }
-
-    // Warm up layout tree (Widgets/Layout) to avoid first-frame jumps.
-    await UIWarmup.warmup(node, { frames: 2, refreshLayoutTree: true, keepActive: true });
-
-    // Warmup finished.
-    if ((view as unknown as UIScreen).notifyWarmupDone) {
-      try {
-        (view as unknown as UIScreen).notifyWarmupDone();
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn(e);
-      }
     }
 
     // Move into final parent, keep hidden until router calls show().
     node.setParent(parent);
     node.active = false;
     hidden.restore();
-
+    
     return view;
   }
 
@@ -229,7 +198,6 @@ export class UIRoot extends Component implements IUIService, IUIHost {
     try {
       view.onCreate?.(params);
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.warn(e);
     }
 
