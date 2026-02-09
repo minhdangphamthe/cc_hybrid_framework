@@ -1,5 +1,6 @@
 # Roadmap and upcoming core features
-- Prefetch với tùy chọn Loading UI từ game
+- Prefetch với tùy chọn Loading UI từ game [DONE]
+- Popup style and transition/animation
 - Hướng dẫn prefetch nested UI với leaderboard, character/skill list trong Gameplay screen (https://chatgpt.com/share/6972df8e-2fd8-8008-90fb-e196dc29adee)
 - Cách dùng dùng rebuildAsync cho heavy UI
 - _runEntry sao không thấy trả về để access về sau
